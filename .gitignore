@@ -1,0 +1,14 @@
+/.cache
+/.org-id-locations
+/.python-environments
+/tramp
+/auto-save-list
+/transient
+/recentf
+/projectile.cache
+/projectile-bookmarks.eld
+/bookmarks
+/config.el
+/elpa
+/config.html
+/generated.el

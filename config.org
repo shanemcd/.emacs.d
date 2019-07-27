@@ -1,0 +1,398 @@
+* My Emacs Configuration
+
+** Package management
+
+There have been several times when ~package-refresh-contents~ does not fix a
+"Bad Request" errror from the default mirrors. These seem to be more reliable:
+
+#+BEGIN_SRC emacs-lisp
+(require 'package)
+(setq package-enable-at-startup nil)
+(setq package-archives
+      '(("melpa" . "https://gitlab.com/d12frosted/elpa-mirror/raw/master/melpa/")
+        ("org"   . "https://gitlab.com/d12frosted/elpa-mirror/raw/master/org/")
+        ("gnu"   . "https://gitlab.com/d12frosted/elpa-mirror/raw/master/gnu/")))
+
+(package-initialize)
+#+END_SRC
+
+*** Bootstrap and configure ~use-package~
+
+I use [[https://github.com/jwiegley/use-package][use-package]] to manage my
+configuration. Here I bootstrap + enable ~use-package-always-ensure~, which will
+always try to install packages in this file without having to use the ~:ensure~
+keyword repeatedly.
+
+#+BEGIN_SRC emacs-lisp
+(unless (package-installed-p 'use-package)
+  (package-refresh-contents)
+  (package-install 'use-package))
+
+(eval-when-compile
+  (require 'use-package))
+
+(require 'use-package-ensure)
+(setq use-package-always-ensure t)
+#+END_SRC
+
+
+** Text and Programming Modes
+
+*** ~org-mode~
+
+#+BEGIN_SRC emacs-lisp
+(use-package org
+  :mode ("\\.org\\'" . org-mode)
+  :bind (("C-c l" . org-store-link)
+	 ("C-c c" . org-capture)
+	 ("C-c a" . org-agenda)
+	 ("C-c C-w" . org-refile))
+  :config
+  (setq org-directory "~/org")
+  (setq org-agenda-files '("~/org"))
+  (setq org-use-speed-commands t)
+  (setq org-capture-templates
+	'(("t" "Todo [inbox]" entry
+	   (file+headline "~/org/things.org" "Inbox")
+	   "* TODO %i%?")))
+  (setq org-refile-targets '((org-agenda-files :maxlevel . 3)))
+  (setq org-imenu-depth 3))
+#+END_SRC
+
+**** Exporting
+
+#+BEGIN_SRC emacs-lisp
+(use-package htmlize
+  :commands (htmlize-buffer
+	     htmlize-file
+	     htmlize-many-files
+	     htmlize-many-files-dired
+	     htmlize-region))
+#+END_SRC
+
+*** ~markdown-mode~
+#+BEGIN_SRC emacs-lisp
+(use-package markdown-mode)
+#+END_SRC
+
+*** ~yaml-mode~
+
+#+BEGIN_SRC emacs-lisp
+(use-package yaml-mode)
+#+END_SRC
+
+
+** Packages
+
+*** ~company~
+
+ #+BEGIN_SRC emacs-lisp
+ (use-package company
+   :config
+   (global-company-mode t))
+ #+END_SRC
+
+*** ~dired~
+
+- Set up key binding for ~dired-jump~.
+  - If you enter a file from dired and press this shortcut, you will pop back
+    into the dired buffer
+- Only show filenames in dired by default, hiding the permissions and other
+  details. Press ~(~ to show details.
+
+#+BEGIN_SRC emacs-lisp
+(global-set-key (kbd "C-x C-j") 'dired-jump)
+(add-hook 'dired-mode-hook 'dired-hide-details-mode)
+#+END_SRC
+
+**** ~dired-subtree~
+
+ #+BEGIN_SRC emacs-lisp
+ (use-package dired-subtree
+   :after dired
+   :config
+   (bind-key "<tab>" #'dired-subtree-toggle dired-mode-map)
+   (bind-key "<backtab>" #'dired-subtree-cycle dired-mode-map))
+ #+END_SRC
+*** ~dumb-jump~
+
+ #+BEGIN_SRC emacs-lisp
+ (use-package dumb-jump
+   :config
+   (setq dumb-jump-selector 'helm))
+ #+END_SRC
+
+*** ~flyspell~
+
+I unbind ~flyspell-mode-map~ because I use ~C-.~ for ~imenu-list~.
+
+ #+BEGIN_SRC emacs-lisp
+ (use-package flyspell
+   :defer t
+   :config
+
+   (add-hook 'prog-mode-hook 'flyspell-prog-mode)
+   (add-hook 'text-mode-hook 'flyspell-mode)
+   (add-hook 'markdown-mode-hook 'flyspell-mode)
+   (define-key flyspell-mode-map (kbd "C-.") nil))
+ #+END_SRC
+
+*** ~helm~
+
+#+BEGIN_SRC emacs-lisp
+(use-package helm
+  :config
+  (require 'helm)
+  (require 'helm-config)
+  (helm-mode t)
+
+  (global-set-key (kbd "M-x") 'helm-M-x)
+  (global-set-key (kbd "C-c f r") 'helm-recentf)
+  (global-set-key (kbd "C-x C-f") 'helm-find-files)
+  (define-key helm-map (kbd "<tab>") 'helm-execute-persistent-action)
+  (define-key helm-map (kbd "C-i") 'helm-execute-persistent-action)
+  (define-key helm-map (kbd "C-z")  'helm-select-action)
+
+  (setq helm-ff-auto-update-initial-value t)
+  (setq helm-mode-fuzzy-match t)
+  (setq helm-completion-in-region-fuzzy-match t)
+  (setq helm-split-window-in-side-p t))
+#+END_SRC
+
+**** ~helm-ag~
+
+#+BEGIN_SRC emacs-lisp
+(use-package helm-ag
+  :bind ("C-c p" . helm-projectile-ag)
+  :commands (helm-ag helm-projectile-ag)
+  :init (setq helm-ag-insert-at-point 'symbol
+	      helm-ag-command-option "--path-to-ignore ~/.agignore"))
+#+END_SRC
+*** ~imenu-list~
+
+#+BEGIN_SRC emacs-lisp
+(use-package imenu-list
+  :bind
+  (("C-." . imenu-list-smart-toggle))
+  :config
+  (setq imenu-list-focus-after-activation t))
+ #+END_SRC
+
+*** ~magit~
+
+#+BEGIN_SRC emacs-lisp
+(use-package magit
+  :bind
+  (("C-x g" . magit-status)))
+#+END_SRC
+
+*** ~mwim~
+
+ "Move where I mean" - ~C-a~ takes you to the first character on the line.
+
+ #+BEGIN_SRC emacs-lisp
+ (use-package mwim
+   :config
+   (global-set-key (kbd "C-a") 'mwim-beginning)
+   (global-set-key (kbd "C-e") 'mwim-end))
+ #+END_SRC
+
+*** ~projectile~
+
+#+BEGIN_SRC emacs-lisp
+(use-package projectile
+  :commands (projectile-find-file projectile-switch-project)
+  :diminish projectile-mode
+  :init
+  (use-package helm-projectile
+    :bind
+    (("M-t" . helm-projectile-find-file)
+     ("s-p" . helm-projectile-find-file)
+     ("s-P" . helm-projectile-switch-project)))
+  :config
+  (projectile-global-mode)
+  (helm-projectile-on))
+#+END_SRC
+
+*** ~reveal-in-osx-finder~
+
+#+BEGIN_SRC emacs-lisp
+(use-package reveal-in-osx-finder)
+#+END_SRC
+*** ~treemacs~
+
+#+BEGIN_SRC emacs-lisp
+
+(use-package treemacs
+  :defer t
+  :init
+  (with-eval-after-load 'winum
+    (define-key winum-keymap (kbd "M-0") #'treemacs-select-window))
+  :config
+  (progn
+    (setq treemacs-no-png-images t)
+    (treemacs-resize-icons 44)
+    (treemacs-follow-mode t)
+    (treemacs-filewatch-mode t)
+    (treemacs-fringe-indicator-mode t)
+    (pcase (cons (not (null (executable-find "git")))
+		 (not (null (treemacs--find-python3))))
+      (`(t . t)
+       (treemacs-git-mode 'deferred))
+      (`(t . _)
+       (treemacs-git-mode 'simple))))
+  :bind
+  (:map global-map
+	("M-0"       . treemacs-select-window)
+	("C-x t 1"   . treemacs-delete-other-windows)
+	("C-x t t"   . treemacs)
+	("C-x t B"   . treemacs-bookmark)
+	("C-x t C-t" . treemacs-find-file)
+	("C-x t M-t" . treemacs-find-tag)))
+#+END_SRC
+
+**** ~treemacs-projectile~
+
+#+BEGIN_SRC emacs-lisp
+(use-package treemacs-projectile
+  :after treemacs projectile
+  :ensure t)
+#+END_SRC
+
+**** ~treemacs-icons-dired~
+
+#+BEGIN_SRC emacs-lisp
+(use-package treemacs-icons-dired
+  :after treemacs dired
+  :config (treemacs-icons-dired-mode))
+#+END_SRC
+
+**** ~treemacs-magit~
+
+#+BEGIN_SRC emacs-lisp
+(use-package treemacs-magit
+  :after treemacs magit)
+#+END_SRC
+*** ~undo-tree~
+
+ Provides the helpful ~undo-tree-visualize~ function. https://www.emacswiki.org/emacs/UndoTree
+
+ #+BEGIN_SRC emacs-lisp
+ (use-package undo-tree
+   :init
+   (undo-tree-mode))
+ #+END_SRC
+
+*** ~which-key~
+
+ #+BEGIN_SRC emacs-lisp
+ (use-package which-key
+   :config
+   (which-key-mode)
+   (which-key-setup-minibuffer))
+ #+END_SRC
+
+*** ~ws-butler~
+
+ #+BEGIN_SRC emacs-lisp
+ (use-package ws-butler
+   :config
+   (ws-butler-global-mode t))
+ #+END_SRC
+
+
+** Interface Customizations
+
+*** Columns
+
+#+BEGIN_SRC emacs-lisp
+(add-hook 'markdown-mode-hook 'auto-fill-mode)
+(add-hook 'text-mode-hook 'auto-fill-mode)
+
+(setq-default fill-column 80)
+#+END_SRC
+
+*** Disable Native UI Controls
+
+#+BEGIN_SRC emacs-lisp
+(tool-bar-mode -1)
+(menu-bar-mode -1)
+(scroll-bar-mode -1)
+#+END_SRC
+
+*** Font
+
+https://github.com/mozilla/Fira
+
+#+BEGIN_SRC emacs-lisp
+(add-to-list 'default-frame-alist '(font . "Fira Mono"))
+#+END_SRC
+
+*** Hide Splash Screen
+
+#+BEGIN_SRC emacs-lisp
+(setq inhibit-splash-screen t)
+#+END_SRC
+
+*** Highlight parens
+
+#+BEGIN_SRC emacs-lisp
+(show-paren-mode 1)
+#+END_SRC
+
+*** Show column number in modeline
+
+ #+BEGIN_SRC emacs-lisp
+ (setq column-number-mode t)
+ #+END_SRC
+
+*** Show Line Numbers
+
+#+BEGIN_SRC emacs-lisp
+(global-display-line-numbers-mode)
+#+END_SRC
+
+*** Start w/ Maximized Window
+
+#+BEGIN_SRC emacs-lisp
+(add-to-list 'default-frame-alist '(fullscreen . maximized))
+#+END_SRC
+
+*** Theme
+
+#+BEGIN_SRC emacs-lisp
+(use-package base16-theme
+  :config
+  (load-theme 'base16-onedark t))
+#+END_SRC
+
+
+** Misc
+
+*** Set up ~PATH~ on macOS
+
+Ensure that the proper shell is used on macOS. For me, this was the solution to:
+
+- An issue where my ~ssh-agent~ was not being used.
+- ~/usr/local/bin/~ wasn't in emacs' ~PATH~.
+
+
+#+BEGIN_SRC emacs-lisp
+(use-package exec-path-from-shell
+  :if (memq window-system '(mac ns))
+  :config
+  (setq exec-path-from-shell-arguments '("-l"))
+  (exec-path-from-shell-initialize)
+  (exec-path-from-shell-copy-env "LC_ALL")
+  (exec-path-from-shell-copy-env "LANG")
+  (exec-path-from-shell-copy-env "LC_TYPE")
+  (exec-path-from-shell-copy-env "SSH_AGENT_PID")
+  (exec-path-from-shell-copy-env "SSH_AUTH_SOCK")
+  (exec-path-from-shell-copy-env "SHELL"))
+#+END_SRC
+
+*** Store generated lisp in separate file
+
+#+BEGIN_SRC emacs-lisp
+(setq custom-file "~/.emacs.d/generated.el")
+#+END_SRC
