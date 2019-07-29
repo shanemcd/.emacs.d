@@ -75,6 +75,15 @@ keyword repeatedly.
 (use-package markdown-mode)
 #+END_SRC
 
+*** ~python-mode~
+
+#+BEGIN_SRC emacs-lisp
+(use-package python
+  :mode ("\\.py\\'" . python-mode)
+  :interpreter ("python3" . python-mode)
+  :config
+  (setq python-shell-interpreter "python3"))
+#+END_SRC
 *** ~yaml-mode~
 
 #+BEGIN_SRC emacs-lisp
