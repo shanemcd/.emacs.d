@@ -75,15 +75,6 @@ keyword repeatedly.
 (use-package markdown-mode)
 #+END_SRC
 
-*** ~python-mode~
-
-#+BEGIN_SRC emacs-lisp
-(use-package python
-  :mode ("\\.py\\'" . python-mode)
-  :interpreter ("python3" . python-mode)
-  :config
-  (setq python-shell-interpreter "python3"))
-#+END_SRC
 *** ~yaml-mode~
 
 #+BEGIN_SRC emacs-lisp
@@ -91,8 +82,23 @@ keyword repeatedly.
 #+END_SRC
 
 
+** Tabs and Spaces
+
+#+BEGIN_SRC emacs-lisp
+(use-package sh-script
+  :mode "\\.sh\\'"
+  :config (setq sh-indentation 2 sh-basic-offset 2))
+#+END_SRC
+
+
 ** Packages
 
+*** ~browse-at-remote~
+#+BEGIN_SRC emacs-lisp
+(use-package browse-at-remote
+  :commands browse-at-remote
+  :bind ("C-c g g" . browse-at-remote))
+#+END_SRC
 *** ~company~
 
  #+BEGIN_SRC emacs-lisp
@@ -219,8 +225,17 @@ I unbind ~flyspell-mode-map~ because I use ~C-.~ for ~imenu-list~.
      ("s-p" . helm-projectile-find-file)
      ("s-P" . helm-projectile-switch-project)))
   :config
+  (setq projectile-switch-project-action #'projectile-commander)
   (projectile-global-mode)
   (helm-projectile-on))
+#+END_SRC
+
+*** ~rainbow-delimeters~
+
+#+BEGIN_SRC emacs-lisp
+(use-package rainbow-delimiters
+  :config
+  (add-hook 'prog-mode-hook #'rainbow-delimiters-mode))
 #+END_SRC
 
 *** ~reveal-in-osx-finder~
@@ -254,7 +269,7 @@ I unbind ~flyspell-mode-map~ because I use ~C-.~ for ~imenu-list~.
   (:map global-map
 	("M-0"       . treemacs-select-window)
 	("C-x t 1"   . treemacs-delete-other-windows)
-	("C-x t t"   . treemacs)
+	("s-t"   . treemacs)
 	("C-x t B"   . treemacs-bookmark)
 	("C-x t C-t" . treemacs-find-file)
 	("C-x t M-t" . treemacs-find-tag)))
@@ -303,13 +318,20 @@ I unbind ~flyspell-mode-map~ because I use ~C-.~ for ~imenu-list~.
 
 *** ~ws-butler~
 
+
  #+BEGIN_SRC emacs-lisp
  (use-package ws-butler
    :config
    (ws-butler-global-mode t))
  #+END_SRC
 
-
+*** ~zoom~
+#+BEGIN_SRC emacs-lisp
+(use-package zoom
+  :config
+  (setq zoom-size '(0.618 . 0.618))
+  (zoom-mode t))
+#+END_SRC
 ** Interface Customizations
 
 *** Columns
@@ -343,12 +365,6 @@ https://github.com/mozilla/Fira
 (setq inhibit-splash-screen t)
 #+END_SRC
 
-*** Highlight parens
-
-#+BEGIN_SRC emacs-lisp
-(show-paren-mode 1)
-#+END_SRC
-
 *** Show column number in modeline
 
  #+BEGIN_SRC emacs-lisp
@@ -372,7 +388,7 @@ https://github.com/mozilla/Fira
 #+BEGIN_SRC emacs-lisp
 (use-package base16-theme
   :config
-  (load-theme 'base16-onedark t))
+  (load-theme 'base16-harmonic-dark t))
 #+END_SRC
 
 
