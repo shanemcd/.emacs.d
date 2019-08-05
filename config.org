@@ -75,6 +75,10 @@ keyword repeatedly.
 (use-package markdown-mode)
 #+END_SRC
 
+*** ~show-paren-mode~
+#+BEGIN_SRC emacs-lisp
+(show-paren-mode)
+#+END_SRC
 *** ~yaml-mode~
 
 #+BEGIN_SRC emacs-lisp
@@ -129,6 +133,12 @@ keyword repeatedly.
    (bind-key "<tab>" #'dired-subtree-toggle dired-mode-map)
    (bind-key "<backtab>" #'dired-subtree-cycle dired-mode-map))
  #+END_SRC
+*** ~drag-stuff~
+#+BEGIN_SRC emacs-lisp
+(use-package drag-stuff
+  :config
+  (drag-stuff-define-keys))
+#+END_SRC
 *** ~dumb-jump~
 
  #+BEGIN_SRC emacs-lisp
@@ -136,7 +146,15 @@ keyword repeatedly.
    :config
    (setq dumb-jump-selector 'helm))
  #+END_SRC
-
+*** ~fill-column-indicator~
+#+BEGIN_SRC emacs-lisp
+(use-package fill-column-indicator
+  :config
+  (setq-default fci-rule-column 80)
+  (add-hook 'prog-mode-hook 'turn-on-fci-mode)
+  (add-hook 'text-mode-hook 'turn-on-fci-mode)
+  (setq fci-rule-color (face-attribute 'highlight :background)))
+#+END_SRC
 *** ~flyspell~
 
 I unbind ~flyspell-mode-map~ because I use ~C-.~ for ~imenu-list~.
@@ -325,6 +343,12 @@ I unbind ~flyspell-mode-map~ because I use ~C-.~ for ~imenu-list~.
    (ws-butler-global-mode t))
  #+END_SRC
 
+*** ~wttrin~
+#+BEGIN_SRC emacs-lisp
+(use-package wttrin
+  :config
+  (setq wttrin-default-cities '("New York NY" "Winchester VA" "Durham NC" "Kaohsiung City")))
+#+END_SRC
 *** ~zoom~
 #+BEGIN_SRC emacs-lisp
 (use-package zoom
@@ -391,7 +415,12 @@ https://github.com/mozilla/Fira
   (load-theme 'base16-harmonic-dark t))
 #+END_SRC
 
-
+*** Wind Move
+https://www.emacswiki.org/emacs/WindMove
+#+BEGIN_SRC emacs-lisp
+(when (fboundp 'windmove-default-keybindings)
+  (windmove-default-keybindings))
+#+END_SRC
 ** Misc
 
 *** Set up ~PATH~ on macOS
