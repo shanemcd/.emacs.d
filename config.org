@@ -35,9 +35,7 @@ keyword repeatedly.
 (setq use-package-always-ensure t)
 #+END_SRC
 
-
 ** Text and Programming Modes
-
 *** ~org-mode~
 
 #+BEGIN_SRC emacs-lisp
@@ -85,7 +83,6 @@ keyword repeatedly.
 (use-package yaml-mode)
 #+END_SRC
 
-
 ** Tabs and Spaces
 
 #+BEGIN_SRC emacs-lisp
@@ -94,9 +91,7 @@ keyword repeatedly.
   :config (setq sh-indentation 2 sh-basic-offset 2))
 #+END_SRC
 
-
 ** Packages
-
 *** ~browse-at-remote~
 #+BEGIN_SRC emacs-lisp
 (use-package browse-at-remote
@@ -151,8 +146,6 @@ keyword repeatedly.
 (use-package fill-column-indicator
   :config
   (setq-default fci-rule-column 80)
-  (add-hook 'prog-mode-hook 'turn-on-fci-mode)
-  (add-hook 'text-mode-hook 'turn-on-fci-mode)
   (setq fci-rule-color (face-attribute 'highlight :background)))
 #+END_SRC
 *** ~flyspell~
@@ -357,7 +350,6 @@ I unbind ~flyspell-mode-map~ because I use ~C-.~ for ~imenu-list~.
   (zoom-mode t))
 #+END_SRC
 ** Interface Customizations
-
 *** Columns
 
 #+BEGIN_SRC emacs-lisp
@@ -422,7 +414,6 @@ https://www.emacswiki.org/emacs/WindMove
   (windmove-default-keybindings))
 #+END_SRC
 ** Misc
-
 *** Set up ~PATH~ on macOS
 
 Ensure that the proper shell is used on macOS. For me, this was the solution to:
