@@ -50,16 +50,22 @@ keyword repeatedly.
   (setq org-agenda-files '("~/org"))
   (setq org-use-speed-commands t)
   (setq org-capture-templates
-	'(("t" "Todo [inbox]" entry
-	   (file+headline "~/org/things.org" "Inbox")
-	   "* TODO %i%?")))
+      '(("t" "Todo" entry (file+headline "~/org/things.org" "Tasks")
+         "* TODO %?\n  %i\n  %a")
+        ("j" "Journal" entry (file+datetree "~/org/journal.org")
+         "* %?\nEntered on %U\n  %i\n  %a")))
   (setq org-refile-targets '((org-agenda-files :maxlevel . 3)))
   (setq org-imenu-depth 3)
   (org-babel-do-load-languages
    'org-babel-load-languages
    '((shell      . t)
      (emacs-lisp . t)
-     (python     . t))))
+     (js         . t)
+     (ruby       . t)
+     (rust       . t)
+     (swift      . t)
+     (python     . t)))
+  (setq org-babel-python-command "python3"))
 #+END_SRC
 
 **** Exporting
