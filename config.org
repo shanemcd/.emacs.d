@@ -239,7 +239,10 @@ I unbind ~flyspell-mode-map~ because I use ~C-.~ for ~imenu-list~.
 #+BEGIN_SRC emacs-lisp
 (use-package magit
   :bind
-  (("C-x g" . magit-status)))
+  (("C-x g" . magit-status))
+  :config
+  (setq magit-display-buffer-function #'magit-display-buffer-fullframe-status-v1))
+
 #+END_SRC
 
 *** ~mwim~
