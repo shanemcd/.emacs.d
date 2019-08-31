@@ -101,6 +101,18 @@ keyword repeatedly.
   :config
   (setq groovy-indent-offset 2))
 #+END_SRC
+
+*** ~rust~
+#+BEGIN_SRC emacs-lisp
+(use-package rust-mode)
+(use-package ob-rust)
+#+END_SRC
+
+*** ~swift~
+#+BEGIN_SRC emacs-lisp
+(use-package swift-mode)
+(use-package ob-swift)
+#+END_SRC
 ** Tabs and Spaces
 
 #+BEGIN_SRC emacs-lisp
