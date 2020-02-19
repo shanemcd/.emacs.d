@@ -116,6 +116,7 @@ keyword repeatedly.
 ** Tabs and Spaces
 
 #+BEGIN_SRC emacs-lisp
+(setq-default indent-tabs-mode nil tab-width 2)
 (use-package sh-script
   :mode "\\.sh\\'"
   :config (setq sh-indentation 2 sh-basic-offset 2))
@@ -209,7 +210,7 @@ I unbind ~flyspell-mode-map~ because I use ~C-.~ for ~imenu-list~.
   (define-key helm-map (kbd "C-i") 'helm-execute-persistent-action)
   (define-key helm-map (kbd "C-z")  'helm-select-action)
 
-  (setq helm-ff-auto-update-initial-value t)
+  (setq helm-ff-auto-update-initial-value nil)
   (setq helm-mode-fuzzy-match t)
   (setq helm-completion-in-region-fuzzy-match t)
   (setq helm-split-window-in-side-p t))
@@ -375,19 +376,16 @@ I unbind ~flyspell-mode-map~ because I use ~C-.~ for ~imenu-list~.
   :config
   (setq wttrin-default-cities '("New York NY" "Winchester VA" "Durham NC" "Kaohsiung City")))
 #+END_SRC
-*** ~zoom~
+*** ~ztree~
 #+BEGIN_SRC emacs-lisp
-(use-package zoom
-  :config
-  (setq zoom-size '(0.618 . 0.618))
-  (zoom-mode t))
+(use-package ztree)
 #+END_SRC
+
 ** Interface Customizations
 *** Columns
 
 #+BEGIN_SRC emacs-lisp
 (add-hook 'markdown-mode-hook 'auto-fill-mode)
-(add-hook 'text-mode-hook 'auto-fill-mode)
 
 (setq-default fill-column 80)
 #+END_SRC

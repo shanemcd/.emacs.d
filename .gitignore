@@ -11,4 +11,7 @@
 /config.el
 /elpa
 /config.html
-/generated.el
+/generated.el*
+/url/cookies*
+/.lsp-session-v1
+/SessionDesktop.el
