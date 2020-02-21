@@ -479,6 +479,10 @@ https://www.emacswiki.org/emacs/WindMove
   (windmove-default-keybindings))
 #+END_SRC
 ** Misc
+*** Require newlines at end of files
+#+BEGIN_SRC emacs-lisp
+(setq require-final-newline t)
+#+END_SRC
 *** Set up ~PATH~ on macOS
 
 Ensure that the proper shell is used on macOS. For me, this was the solution to:
