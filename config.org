@@ -134,7 +134,8 @@ keyword repeatedly.
  #+BEGIN_SRC emacs-lisp
  (use-package company
    :config
-   (global-company-mode t))
+   (global-company-mode t)
+   (setq company-global-modes '(not org-mode)))
  #+END_SRC
 
 *** ~dired~
