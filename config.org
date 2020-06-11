@@ -9,9 +9,9 @@ There have been several times when ~package-refresh-contents~ does not fix a
 (require 'package)
 (setq package-enable-at-startup nil)
 (setq package-archives
-      '(("melpa" . "https://gitlab.com/d12frosted/elpa-mirror/raw/master/melpa/")
-        ("org"   . "https://gitlab.com/d12frosted/elpa-mirror/raw/master/org/")
-        ("gnu"   . "https://gitlab.com/d12frosted/elpa-mirror/raw/master/gnu/")))
+      '(("melpa" . "https://raw.githubusercontent.com/d12frosted/elpa-mirror/master/melpa/")
+        ("org"   . "https://raw.githubusercontent.com/d12frosted/elpa-mirror/master/org/")
+        ("gnu"   . "https://raw.githubusercontent.com/d12frosted/elpa-mirror/master/gnu/")))
 
 (package-initialize)
 #+END_SRC
@@ -65,23 +65,17 @@ keyword repeatedly.
      (rust       . t)
      (swift      . t)
      (python     . t)))
-  (setq org-babel-python-command "python3"))
-#+END_SRC
-
-**** Exporting
-
-#+BEGIN_SRC emacs-lisp
-(use-package htmlize
-  :commands (htmlize-buffer
-	     htmlize-file
-	     htmlize-many-files
-	     htmlize-many-files-dired
-	     htmlize-region))
+  (setq org-babel-python-command "python3")
+  (setq org-startup-folded nil)
+  (setq org-odt-preferred-output-format "docx")
+  (setq org-src-fontify-natively t))
 #+END_SRC
 
 *** ~markdown-mode~
 #+BEGIN_SRC emacs-lisp
-(use-package markdown-mode)
+(use-package markdown-mode
+  :config
+  (setq markdown-fontify-code-blocks-natively t))
 #+END_SRC
 
 *** ~show-paren-mode~
@@ -113,13 +107,19 @@ keyword repeatedly.
 (use-package swift-mode)
 (use-package ob-swift)
 #+END_SRC
+
+*** ~go~
+#+BEGIN_SRC emacs-lisp
+(use-package go-mode)
+#+END_SRC
+
 ** Tabs and Spaces
 
 #+BEGIN_SRC emacs-lisp
-(setq-default indent-tabs-mode nil tab-width 2)
+(setq-default indent-tabs-mode nil tab-width 4)
 (use-package sh-script
   :mode "\\.sh\\'"
-  :config (setq sh-indentation 2 sh-basic-offset 2))
+  :config (setq sh-indentation 4 sh-basic-offset 4))
 #+END_SRC
 
 ** Packages
@@ -134,6 +134,8 @@ keyword repeatedly.
  #+BEGIN_SRC emacs-lisp
  (use-package company
    :config
+   (setq company-idle-delay 0)
+   (setq company-minimum-prefix-length 1)
    (global-company-mode t)
    (setq company-global-modes '(not org-mode)))
  #+END_SRC
@@ -232,6 +234,18 @@ I unbind ~flyspell-mode-map~ because I use ~C-.~ for ~imenu-list~.
   :init (setq helm-ag-insert-at-point 'symbol
 	      helm-ag-command-option "--path-to-ignore ~/.agignore"))
 #+END_SRC
+
+*** ~htmlize~
+
+#+BEGIN_SRC emacs-lisp
+(use-package htmlize
+  :commands (htmlize-buffer
+	     htmlize-file
+	     htmlize-many-files
+	     htmlize-many-files-dired
+	     htmlize-region))
+#+END_SRC
+
 *** ~imenu-list~
 
 #+BEGIN_SRC emacs-lisp
@@ -250,11 +264,13 @@ I unbind ~flyspell-mode-map~ because I use ~C-.~ for ~imenu-list~.
   :hook (;; replace XXX-mode with concrete major-mode(e. g. python-mode)
          ;; if you want which-key integration
          (python-mode . lsp)
+         (go-mode . lsp-deferred)
          (lsp-mode . lsp-enable-which-key-integration))
-  :commands lsp
+  :commands (lsp lsp-deferred)
   :config
   (setq lsp-log-io 1)
-  (setq lsp-pyls-configuration-sources ["flake8"]))
+  (setq lsp-pyls-configuration-sources ["flake8"])
+  (setq lsp-pyls-plugins-mccabe-enabled nil))
 
 ;; optionally
 (use-package lsp-ui :commands lsp-ui-mode
@@ -267,7 +283,6 @@ I unbind ~flyspell-mode-map~ because I use ~C-.~ for ~imenu-list~.
         company-idle-delay 0.0))
 ;; if you are helm user
 (use-package helm-lsp :commands helm-lsp-workspace-symbol)
-(use-package lsp-treemacs :commands lsp-treemacs-errors-list)
 #+END_SRC
 *** ~magit~
 
@@ -415,6 +430,25 @@ I unbind ~flyspell-mode-map~ because I use ~C-.~ for ~imenu-list~.
 (use-package ztree)
 #+END_SRC
 
+*** ~yassnippet~
+#+BEGIN_SRC emacs-lisp
+(use-package yasnippet
+  :commands yas-minor-mode
+  :hook (go-mode . yas-minor-mode))
+#+END_SRC
+
+*** ~vterm~
+#+BEGIN_SRC emacs-lisp
+(use-package vterm)
+#+END_SRC
+
+*** ~winum~
+#+BEGIN_SRC emacs-lisp
+(use-package winum
+  :init
+  (winum-mode))
+#+END_SRC
+
 ** Interface Customizations
 *** Columns
 
@@ -469,7 +503,7 @@ https://github.com/mozilla/Fira
 #+BEGIN_SRC emacs-lisp
 (use-package base16-theme
   :config
-  (load-theme 'base16-harmonic-dark t))
+  (load-theme 'base16-material t))
 #+END_SRC
 
 *** Wind Move
@@ -496,7 +530,9 @@ Ensure that the proper shell is used on macOS. For me, this was the solution to:
   :if (memq window-system '(mac ns))
   :config
   (setq exec-path-from-shell-arguments '("-l"))
+  (setenv "SHELL" "/bin/zsh")
   (exec-path-from-shell-initialize)
+  (exec-path-from-shell-copy-env "PATH")
   (exec-path-from-shell-copy-env "LC_ALL")
   (exec-path-from-shell-copy-env "LANG")
   (exec-path-from-shell-copy-env "LC_TYPE")
