@@ -15,3 +15,5 @@
 /url/cookies*
 /.lsp-session-v1
 /SessionDesktop.el
+/.extension/
+/.dap-breakpoints

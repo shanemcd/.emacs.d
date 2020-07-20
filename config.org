@@ -36,6 +36,15 @@ keyword repeatedly.
 #+END_SRC
 
 ** Text and Programming Modes
+
+*** ~python-mode~
+#+BEGIN_SRC emacs-lisp
+(setq python-shell-interpreter "/Users/shanemcd/.pyenv/shims/python"
+      flycheck-python-pycompile-executable "/Users/shanemcd/.pyenv/shims/python"
+      python-shell-exec-path "/Users/shanemcd/.pyenv/shims/python"
+      doom-modeline-python-executable "/Users/shanemcd/.pyenv/shims/python")
+#+END_SRC
+
 *** ~org-mode~
 
 #+BEGIN_SRC emacs-lisp
@@ -46,14 +55,12 @@ keyword repeatedly.
 	 ("C-c a" . org-agenda)
 	 ("C-c C-w" . org-refile))
   :config
-  (setq org-directory "~/org")
-  (setq org-agenda-files '("~/org"))
+  (setq org-directory "~/Dropbox/org")
+  (setq org-agenda-files (directory-files-recursively "~/Dropbox/org/agenda/" "\\.org$"))
   (setq org-use-speed-commands t)
   (setq org-capture-templates
-      '(("t" "Todo" entry (file+headline "~/org/things.org" "Tasks")
-         "* TODO %?\n  %i\n  %a")
-        ("j" "Journal" entry (file+datetree "~/org/journal.org")
-         "* %?\nEntered on %U\n  %i\n  %a")))
+      '(("t" "Todo" entry (file+headline "~/Dropbox/org/agenda/incoming.org" "Tasks")
+         "* TODO %?\n  %i\n  %a")))
   (setq org-refile-targets '((org-agenda-files :maxlevel . 3)))
   (setq org-imenu-depth 3)
   (org-babel-do-load-languages
@@ -70,6 +77,7 @@ keyword repeatedly.
   (setq org-odt-preferred-output-format "docx")
   (setq org-src-fontify-natively t))
 #+END_SRC
+
 
 *** ~markdown-mode~
 #+BEGIN_SRC emacs-lisp
@@ -110,7 +118,18 @@ keyword repeatedly.
 
 *** ~go~
 #+BEGIN_SRC emacs-lisp
-(use-package go-mode)
+(use-package go-mode
+  :config
+  (add-hook 'go-mode-hook
+            (lambda ()
+              (setq indent-tabs-mode 1)
+              (setq tab-width 8))))
+(use-package ob-go)
+#+END_SRC
+
+*** ~dockerfile-mode~
+#+BEGIN_SRC emacs-lisp
+(use-package dockerfile-mode)
 #+END_SRC
 
 ** Tabs and Spaces
@@ -151,6 +170,11 @@ keyword repeatedly.
 #+BEGIN_SRC emacs-lisp
 (global-set-key (kbd "C-x C-j") 'dired-jump)
 (add-hook 'dired-mode-hook 'dired-hide-details-mode)
+(use-package dired-single)
+(require 'dired-x)
+(setq-default dired-omit-files-p t) ; Buffer-local variable
+(setq dired-omit-files (concat dired-omit-files "\\|^\\..+$"))
+(setq dired-omit-mode t)
 #+END_SRC
 
 **** ~dired-subtree~
@@ -223,6 +247,8 @@ I unbind ~flyspell-mode-map~ because I use ~C-.~ for ~imenu-list~.
   (setq helm-mode-fuzzy-match t)
   (setq helm-completion-in-region-fuzzy-match t)
   (setq helm-split-window-in-side-p t))
+
+(use-package helm-xref)
 #+END_SRC
 
 **** ~helm-ag~
@@ -258,31 +284,81 @@ I unbind ~flyspell-mode-map~ because I use ~C-.~ for ~imenu-list~.
 
 *** ~lsp~
 #+BEGIN_SRC emacs-lisp
-(use-package lsp-mode
-  ;; set prefix for lsp-command-keymap (few alternatives - "C-l", "C-c l")
-  :init (setq lsp-keymap-prefix "s-l")
-  :hook (;; replace XXX-mode with concrete major-mode(e. g. python-mode)
-         ;; if you want which-key integration
-         (python-mode . lsp)
-         (go-mode . lsp-deferred)
-         (lsp-mode . lsp-enable-which-key-integration))
-  :commands (lsp lsp-deferred)
-  :config
-  (setq lsp-log-io 1)
-  (setq lsp-pyls-configuration-sources ["flake8"])
-  (setq lsp-pyls-plugins-mccabe-enabled nil))
+  (use-package lsp-mode
+    ;; set prefix for lsp-command-keymap (few alternatives - "C-l", "C-c l")
+    :init (setq lsp-keymap-prefix "s-l")
+    :hook (;; replace XXX-mode with concrete major-mode(e. g. python-mode)
+           ;; if you want which-key integration
+           (python-mode . lsp)
+           (go-mode . lsp-deferred)
+           (lsp-mode . lsp-enable-which-key-integration))
+    :commands (lsp lsp-deferred)
+    :config
+    (setq lsp-log-io 1)
+    (setq lsp-pyls-configuration-sources ["flake8"])
+    (setq lsp-pyls-plugins-mccabe-enabled nil)
+    (lsp-register-client
+      (make-lsp-client :new-connection (lsp-tramp-connection "pyls")
+                       :major-modes '(python-mode)
+                       :remote? t
+                       :server-id 'pyls-remote))
 
-;; optionally
-(use-package lsp-ui :commands lsp-ui-mode
-  :config
-  (define-key lsp-ui-mode-map [remap xref-find-definitions] #'lsp-ui-peek-find-definitions)
-  (define-key lsp-ui-mode-map [remap xref-find-references] #'lsp-ui-peek-find-references))
-(use-package company-lsp :commands company-lsp
-  :config
-  (setq company-minimum-prefix-length 1
-        company-idle-delay 0.0))
-;; if you are helm user
-(use-package helm-lsp :commands helm-lsp-workspace-symbol)
+    (lsp-register-client
+      (make-lsp-client :new-connection (lsp-tramp-connection "gopls")
+                       :major-modes '(go-mode)
+                       :remote? t
+                       :server-id 'gopls-remote))
+
+    (defun lsp-set-cfg ()
+      (let ((lsp-cfg '(:pyls (:configurationSources ("flake8")))))
+        (lsp--set-configuration lsp-cfg)))
+
+    (add-hook 'lsp-after-initialize-hook 'lsp-set-cfg)
+
+    (setq xref-prompt-for-identifier '(not xref-find-definitions
+                                           xref-find-definitions-other-window
+                                           xref-find-definitions-other-frame
+                                           xref-find-references))
+
+    (setq xref-show-xrefs-function 'helm-xref-show-xrefs))
+
+  (use-package lsp-ui
+    :requires lsp-mode flycheck
+    :commands lsp-ui-mode
+    :custom-face
+    (lsp-ui-doc-background ((t (:background nil))))
+    (lsp-ui-doc-header ((t (:inherit (font-lock-string-face italic)))))
+    :bind
+    (:map lsp-ui-mode-map
+      ([remap xref-find-definitions] . lsp-ui-peek-find-definitions)
+      ([remap xref-find-references] . lsp-ui-peek-find-references)
+      ("C-c u" . lsp-ui-imenu))
+    :hook (lsp-mode-hook . lsp-ui-mode)
+    :custom
+    (lsp-ui-doc-enable t)
+    (lsp-ui-doc-use-childframe f)
+    (lsp-ui-flycheck-enable t)
+    (lsp-ui-flycheck-list-position 'right)
+    (lsp-ui-flycheck-live-reporting t)
+    (lsp-ui-peek-enable t)
+    (lsp-ui-peek-list-width 60)
+    (lsp-ui-peek-peek-height 25)
+    (lsp-ui-doc-header t)
+    (lsp-ui-doc-include-signature t)
+    (lsp-ui-doc-position 'top)
+    (lsp-ui-doc-border (face-foreground 'default))
+    (lsp-ui-sideline-enable t)
+    (lsp-ui-sideline-ignore-duplicate t)
+    (lsp-ui-sideline-show-code-actions t))
+
+  (use-package company-lsp :commands company-lsp
+    :config
+    (setq company-minimum-prefix-length 1
+          company-idle-delay 0.0))
+
+  ;; if you are helm user
+  (use-package helm-lsp :commands helm-lsp-workspace-symbol)
+
 #+END_SRC
 *** ~magit~
 
@@ -292,7 +368,6 @@ I unbind ~flyspell-mode-map~ because I use ~C-.~ for ~imenu-list~.
   (("C-x g" . magit-status))
   :config
   (setq magit-display-buffer-function #'magit-display-buffer-fullframe-status-v1))
-
 #+END_SRC
 
 *** ~mwim~
@@ -384,11 +459,6 @@ I unbind ~flyspell-mode-map~ because I use ~C-.~ for ~imenu-list~.
   :hook (go-mode . yas-minor-mode))
 #+END_SRC
 
-*** ~vterm~
-#+BEGIN_SRC emacs-lisp
-(use-package vterm)
-#+END_SRC
-
 *** ~winum~
 #+BEGIN_SRC emacs-lisp
 (use-package winum
@@ -405,6 +475,15 @@ I unbind ~flyspell-mode-map~ because I use ~C-.~ for ~imenu-list~.
        ("M-7" . 'winum-select-window-7)
        ("M-8" . 'winum-select-window-8))
   )
+#+END_SRC
+
+*** ~dap~
+#+BEGIN_SRC emacs-lisp
+(use-package dap-mode)
+(require 'dap-go)
+(setq dap-print-io t)
+(setq dap-go-delve-path "/Users/shanemcd/go/bin/dlv")
+(dap-auto-configure-mode)
 #+END_SRC
 
 ** Interface Customizations
@@ -470,6 +549,14 @@ https://github.com/mozilla/Fira
 (use-package neotree
   :config
   (setq neo-autorefresh t)
+  (setq neo-window-fixed-size nil)
+  (setq neo-reset-size-on-open nil)
+  (eval-after-load "neotree"
+    '(add-to-list 'window-size-change-functions
+                  (lambda (frame)
+                    (let ((neo-window (neo-global--get-window)))
+                      (unless (null neo-window)
+                        (setq neo-window-width (window-width neo-window)))))))
   (setq neo-theme (if (display-graphic-p) 'icons 'arrow))
   :bind
   (:map global-map
@@ -480,8 +567,8 @@ https://github.com/mozilla/Fira
 #+BEGIN_SRC emacs-lisp
 (use-package doom-modeline
   :init (doom-modeline-mode 1)
-  :config
-  (setq doom-modeline-env-version nil))
+  :config)
+;;  (setq doom-modeline-env-version nil))
 #+END_SRC
 
 *** Wind Move
@@ -491,6 +578,16 @@ https://www.emacswiki.org/emacs/WindMove
   (windmove-default-keybindings))
 #+END_SRC
 ** Misc
+
+#+BEGIN_SRC emacs-lisp
+(global-set-key (kbd "C-c d") 'make-directory)
+(setq backup-directory-alist `(("." . "~/.emacs.bak")))
+
+(require 'tramp)
+(add-to-list 'tramp-remote-path 'tramp-own-remote-path)
+#+END_SRC
+
+
 *** Require newlines at end of files
 #+BEGIN_SRC emacs-lisp
 (setq require-final-newline t)
@@ -510,6 +607,7 @@ Ensure that the proper shell is used on macOS. For me, this was the solution to:
   (setq exec-path-from-shell-arguments '("-l"))
   (setenv "SHELL" "/bin/zsh")
   (exec-path-from-shell-initialize)
+  (exec-path-from-shell-copy-env "GOPATH")
   (exec-path-from-shell-copy-env "PATH")
   (exec-path-from-shell-copy-env "LC_ALL")
   (exec-path-from-shell-copy-env "LANG")
@@ -523,4 +621,9 @@ Ensure that the proper shell is used on macOS. For me, this was the solution to:
 
 #+BEGIN_SRC emacs-lisp
 (setq custom-file "~/.emacs.d/generated.el")
+#+END_SRC
+
+*** ~vterm~
+#+BEGIN_SRC emacs-lisp
+(use-package vterm)
 #+END_SRC
