@@ -12,8 +12,6 @@ There have been several times when ~package-refresh-contents~ does not fix a
       '(("melpa" . "https://raw.githubusercontent.com/d12frosted/elpa-mirror/master/melpa/")
         ("org"   . "https://raw.githubusercontent.com/d12frosted/elpa-mirror/master/org/")
         ("gnu"   . "https://raw.githubusercontent.com/d12frosted/elpa-mirror/master/gnu/")))
-
-(package-initialize)
 #+END_SRC
 
 *** Bootstrap and configure ~use-package~
@@ -41,8 +39,7 @@ keyword repeatedly.
 #+BEGIN_SRC emacs-lisp
 (setq python-shell-interpreter "/Users/shanemcd/.pyenv/shims/python"
       flycheck-python-pycompile-executable "/Users/shanemcd/.pyenv/shims/python"
-      python-shell-exec-path "/Users/shanemcd/.pyenv/shims/python"
-      doom-modeline-python-executable "/Users/shanemcd/.pyenv/shims/python")
+      python-shell-exec-path "/Users/shanemcd/.pyenv/shims/python")
 #+END_SRC
 
 *** ~org-mode~
@@ -247,8 +244,6 @@ I unbind ~flyspell-mode-map~ because I use ~C-.~ for ~imenu-list~.
   (setq helm-mode-fuzzy-match t)
   (setq helm-completion-in-region-fuzzy-match t)
   (setq helm-split-window-in-side-p t))
-
-(use-package helm-xref)
 #+END_SRC
 
 **** ~helm-ag~
@@ -313,14 +308,7 @@ I unbind ~flyspell-mode-map~ because I use ~C-.~ for ~imenu-list~.
       (let ((lsp-cfg '(:pyls (:configurationSources ("flake8")))))
         (lsp--set-configuration lsp-cfg)))
 
-    (add-hook 'lsp-after-initialize-hook 'lsp-set-cfg)
-
-    (setq xref-prompt-for-identifier '(not xref-find-definitions
-                                           xref-find-definitions-other-window
-                                           xref-find-definitions-other-frame
-                                           xref-find-references))
-
-    (setq xref-show-xrefs-function 'helm-xref-show-xrefs))
+    (add-hook 'lsp-after-initialize-hook 'lsp-set-cfg))
 
   (use-package lsp-ui
     :requires lsp-mode flycheck
@@ -328,11 +316,6 @@ I unbind ~flyspell-mode-map~ because I use ~C-.~ for ~imenu-list~.
     :custom-face
     (lsp-ui-doc-background ((t (:background nil))))
     (lsp-ui-doc-header ((t (:inherit (font-lock-string-face italic)))))
-    :bind
-    (:map lsp-ui-mode-map
-      ([remap xref-find-definitions] . lsp-ui-peek-find-definitions)
-      ([remap xref-find-references] . lsp-ui-peek-find-references)
-      ("C-c u" . lsp-ui-imenu))
     :hook (lsp-mode-hook . lsp-ui-mode)
     :custom
     (lsp-ui-doc-enable t)
@@ -349,14 +332,15 @@ I unbind ~flyspell-mode-map~ because I use ~C-.~ for ~imenu-list~.
     (lsp-ui-doc-border (face-foreground 'default))
     (lsp-ui-sideline-enable t)
     (lsp-ui-sideline-ignore-duplicate t)
-    (lsp-ui-sideline-show-code-actions t))
+    (lsp-ui-sideline-show-code-actions t)
+    :config
+    (global-set-key (kbd "M-?") 'lsp-ui-peek-find-references))
 
   (use-package company-lsp :commands company-lsp
     :config
     (setq company-minimum-prefix-length 1
           company-idle-delay 0.0))
 
-  ;; if you are helm user
   (use-package helm-lsp :commands helm-lsp-workspace-symbol)
 
 #+END_SRC
@@ -395,6 +379,8 @@ I unbind ~flyspell-mode-map~ because I use ~C-.~ for ~imenu-list~.
      ("s-P" . helm-projectile-switch-project)))
   :config
   (setq projectile-switch-project-action #'projectile-commander)
+  (add-to-list 'projectile-globally-ignored-directories "*node_modules")
+  (add-to-list 'projectile-globally-ignored-directories "*.tox")
   (projectile-global-mode)
   (helm-projectile-on))
 #+END_SRC
@@ -484,6 +470,29 @@ I unbind ~flyspell-mode-map~ because I use ~C-.~ for ~imenu-list~.
 (setq dap-print-io t)
 (setq dap-go-delve-path "/Users/shanemcd/go/bin/dlv")
 (dap-auto-configure-mode)
+
+(dap-register-debug-template
+  "Remote Test"
+  (list :type "go"
+        :request "launch"
+        :name "Connect to Remote dlv"
+        :mode "remote"
+        :remotePath "/home/shanemcd/receptor/cmd/"
+        :apiVersion "2"
+        :host "localhost"
+        :port "2345"))
+
+(dap-register-debug-template
+  "Launch Receptor"
+  (list :type "go"
+        :request "launch"
+        :name "Launch Receptor"
+        :mode "debug"
+        :program "/Users/shanemcd/Development/ansible/receptor/cmd/"
+        :buildFlags "-gcflags '-N -l'"
+        :args "--node id=foo --local-only"
+        :env nil
+        :envFile nil))
 #+END_SRC
 
 ** Interface Customizations
@@ -563,14 +572,6 @@ https://github.com/mozilla/Fira
 	("s-t"   . neotree-toggle)))
 #+END_SRC
 
-*** ~doom-modeline~
-#+BEGIN_SRC emacs-lisp
-(use-package doom-modeline
-  :init (doom-modeline-mode 1)
-  :config)
-;;  (setq doom-modeline-env-version nil))
-#+END_SRC
-
 *** Wind Move
 https://www.emacswiki.org/emacs/WindMove
 #+BEGIN_SRC emacs-lisp
@@ -585,6 +586,8 @@ https://www.emacswiki.org/emacs/WindMove
 
 (require 'tramp)
 (add-to-list 'tramp-remote-path 'tramp-own-remote-path)
+
+(setenv "PINENTRY_USER_DATA" "USE_CURSES=0")
 #+END_SRC
 
 
