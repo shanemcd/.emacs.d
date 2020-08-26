@@ -52,6 +52,7 @@ keyword repeatedly.
 	 ("C-c a" . org-agenda)
 	 ("C-c C-w" . org-refile))
   :config
+  (require 'org-tempo)
   (setq org-directory "~/Dropbox/org")
   (setq org-agenda-files (directory-files-recursively "~/Dropbox/org/agenda/" "\\.org$"))
   (setq org-use-speed-commands t)
@@ -242,8 +243,7 @@ I unbind ~flyspell-mode-map~ because I use ~C-.~ for ~imenu-list~.
 
   (setq helm-ff-auto-update-initial-value nil)
   (setq helm-mode-fuzzy-match t)
-  (setq helm-completion-in-region-fuzzy-match t)
-  (setq helm-split-window-in-side-p t))
+  (setq helm-completion-in-region-fuzzy-match t))
 #+END_SRC
 
 **** ~helm-ag~
@@ -279,69 +279,68 @@ I unbind ~flyspell-mode-map~ because I use ~C-.~ for ~imenu-list~.
 
 *** ~lsp~
 #+BEGIN_SRC emacs-lisp
-  (use-package lsp-mode
-    ;; set prefix for lsp-command-keymap (few alternatives - "C-l", "C-c l")
-    :init (setq lsp-keymap-prefix "s-l")
-    :hook (;; replace XXX-mode with concrete major-mode(e. g. python-mode)
-           ;; if you want which-key integration
-           (python-mode . lsp)
-           (go-mode . lsp-deferred)
-           (lsp-mode . lsp-enable-which-key-integration))
-    :commands (lsp lsp-deferred)
-    :config
-    (setq lsp-log-io 1)
-    (setq lsp-pyls-configuration-sources ["flake8"])
-    (setq lsp-pyls-plugins-mccabe-enabled nil)
-    (lsp-register-client
-      (make-lsp-client :new-connection (lsp-tramp-connection "pyls")
-                       :major-modes '(python-mode)
-                       :remote? t
-                       :server-id 'pyls-remote))
+(use-package lsp-mode
+  ;; set prefix for lsp-command-keymap (few alternatives - "C-l", "C-c l")
+  :init (setq lsp-keymap-prefix "s-l")
+  :hook (;; replace XXX-mode with concrete major-mode(e. g. python-mode)
+         ;; if you want which-key integration
+         (python-mode . lsp)
+         (go-mode . lsp-deferred)
+         (lsp-mode . lsp-enable-which-key-integration))
+  :commands (lsp lsp-deferred)
+  :config
+  (setq lsp-log-io 1)
+  (setq lsp-pyls-configuration-sources ["flake8"])
+  (setq lsp-pyls-plugins-mccabe-enabled nil)
+  (lsp-register-client
+    (make-lsp-client :new-connection (lsp-tramp-connection "pyls")
+                     :major-modes '(python-mode)
+                     :remote? t
+                     :server-id 'pyls-remote))
 
-    (lsp-register-client
-      (make-lsp-client :new-connection (lsp-tramp-connection "gopls")
-                       :major-modes '(go-mode)
-                       :remote? t
-                       :server-id 'gopls-remote))
+  (lsp-register-client
+    (make-lsp-client :new-connection (lsp-tramp-connection "gopls")
+                     :major-modes '(go-mode)
+                     :remote? t
+                     :server-id 'gopls-remote))
 
-    (defun lsp-set-cfg ()
-      (let ((lsp-cfg '(:pyls (:configurationSources ("flake8")))))
-        (lsp--set-configuration lsp-cfg)))
+  (defun lsp-set-cfg ()
+    (let ((lsp-cfg '(:pyls (:configurationSources ("flake8")))))
+      (lsp--set-configuration lsp-cfg)))
 
-    (add-hook 'lsp-after-initialize-hook 'lsp-set-cfg))
+  (add-hook 'lsp-after-initialize-hook 'lsp-set-cfg))
 
-  (use-package lsp-ui
-    :requires lsp-mode flycheck
-    :commands lsp-ui-mode
-    :custom-face
-    (lsp-ui-doc-background ((t (:background nil))))
-    (lsp-ui-doc-header ((t (:inherit (font-lock-string-face italic)))))
-    :hook (lsp-mode-hook . lsp-ui-mode)
-    :custom
-    (lsp-ui-doc-enable t)
-    (lsp-ui-doc-use-childframe f)
-    (lsp-ui-flycheck-enable t)
-    (lsp-ui-flycheck-list-position 'right)
-    (lsp-ui-flycheck-live-reporting t)
-    (lsp-ui-peek-enable t)
-    (lsp-ui-peek-list-width 60)
-    (lsp-ui-peek-peek-height 25)
-    (lsp-ui-doc-header t)
-    (lsp-ui-doc-include-signature t)
-    (lsp-ui-doc-position 'top)
-    (lsp-ui-doc-border (face-foreground 'default))
-    (lsp-ui-sideline-enable t)
-    (lsp-ui-sideline-ignore-duplicate t)
-    (lsp-ui-sideline-show-code-actions t)
-    :config
-    (global-set-key (kbd "M-?") 'lsp-ui-peek-find-references))
+(use-package lsp-ui
+  :requires lsp-mode flycheck
+  :commands lsp-ui-mode
+  :custom-face
+  (lsp-ui-doc-background ((t (:background nil))))
+  (lsp-ui-doc-header ((t (:inherit (font-lock-string-face italic)))))
+  :hook (lsp-mode-hook . lsp-ui-mode)
+  :custom
+  (lsp-ui-doc-enable t)
+  (lsp-ui-doc-use-childframe f)
+  (lsp-ui-flycheck-enable t)
+  (lsp-ui-flycheck-list-position 'right)
+  (lsp-ui-flycheck-live-reporting t)
+  (lsp-ui-peek-enable t)
+  (lsp-ui-peek-list-width 60)
+  (lsp-ui-peek-peek-height 25)
+  (lsp-ui-doc-header t)
+  (lsp-ui-doc-include-signature t)
+  (lsp-ui-doc-position 'top)
+  (lsp-ui-doc-border (face-foreground 'default))
+  (lsp-ui-sideline-enable t)
+  (lsp-ui-sideline-ignore-duplicate t)
+  (lsp-ui-sideline-show-code-actions t)
+  :bind (:map lsp-ui-mode-map
+         ([remap xref-find-definitions] . lsp-ui-peek-find-definitions)
+         ([remap xref-find-references] . lsp-ui-peek-find-references)))
 
-  (use-package company-lsp :commands company-lsp
-    :config
-    (setq company-minimum-prefix-length 1
-          company-idle-delay 0.0))
-
-  (use-package helm-lsp :commands helm-lsp-workspace-symbol)
+(use-package company-lsp :commands company-lsp
+  :config
+  (setq company-minimum-prefix-length 1
+        company-idle-delay 0.0))
 
 #+END_SRC
 *** ~magit~
@@ -384,6 +383,14 @@ I unbind ~flyspell-mode-map~ because I use ~C-.~ for ~imenu-list~.
   (projectile-global-mode)
   (helm-projectile-on))
 #+END_SRC
+
+#+begin_src emacs-lisp
+(use-package quelpa-use-package)
+
+(use-package hideshowvis
+  :quelpa (hideshowvis :fetcher github :repo "sheijk/hideshowvis")
+  :hook (prog-mode . hideshowvis-minor-mode))
+#+end_src
 
 *** ~rainbow-delimeters~
 
