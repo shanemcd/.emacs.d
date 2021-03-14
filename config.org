@@ -297,13 +297,11 @@ I unbind ~flyspell-mode-map~ because I use ~C-.~ for ~imenu-list~.
   (setq gc-cons-threshold 100000000)
   (setq read-process-output-max (* 1024 1024)) ;; 1mb
   (setq lsp-diagnostic-package :none)
-    ;;(lsp-register-client
-    ;;(make-lsp-client :new-connection (lsp-tramp-connection "pyls")
-    ;;                 :major-modes '(python-mode)
-    ;;                 :remote? t
-    ;;                 :server-id 'pyls-remote))
-
-  )
+    (lsp-register-client
+    (make-lsp-client :new-connection (lsp-tramp-connection "pyls")
+                     :major-modes '(python-mode)
+                     :remote? t
+                     :server-id 'pyls-remote)))
 
 (use-package lsp-ui
   :requires lsp-mode flycheck
@@ -611,3 +609,20 @@ Ensure that the proper shell is used on macOS. For me, this was the solution to:
 #+BEGIN_SRC emacs-lisp
 (setq custom-file "~/.emacs.d/generated.el")
 #+END_SRC
+
+
+*** macOS Keybindings
+#+begin_src emacs-lisp
+(global-set-key [(hyper a)] 'mark-whole-buffer)
+(global-set-key [(hyper v)] 'yank)
+(global-set-key [(hyper c)] 'kill-ring-save)
+(global-set-key [(hyper x)] 'kill-region)
+(global-set-key [(hyper s)] 'save-buffer)
+(global-set-key [(hyper l)] 'goto-line)
+(global-set-key [(hyper w)]
+                (lambda () (interactive) (delete-window)))
+(global-set-key [(hyper z)] 'undo)
+
+(setq mac-option-modifier 'meta)
+(setq mac-command-modifier 'hyper)
+#+end_src
