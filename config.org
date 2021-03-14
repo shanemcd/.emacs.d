@@ -151,7 +151,6 @@ keyword repeatedly.
  #+BEGIN_SRC emacs-lisp
  (use-package company
    :config
-   (setq company-idle-delay 0)
    (setq company-minimum-prefix-length 1)
    (global-company-mode t)
    (setq company-global-modes '(not org-mode)))
@@ -277,38 +276,34 @@ I unbind ~flyspell-mode-map~ because I use ~C-.~ for ~imenu-list~.
   (setq imenu-list-focus-after-activation t))
  #+END_SRC
 
+*** ~tramp~
+
+#+begin_src emacs-lisp
+(use-package tramp
+  :defer t)
+#+end_src
+
 *** ~lsp~
 #+BEGIN_SRC emacs-lisp
 (use-package lsp-mode
-  ;; set prefix for lsp-command-keymap (few alternatives - "C-l", "C-c l")
   :init (setq lsp-keymap-prefix "s-l")
-  :hook (;; replace XXX-mode with concrete major-mode(e. g. python-mode)
-         ;; if you want which-key integration
-         (python-mode . lsp)
-         (go-mode . lsp-deferred)
-         (lsp-mode . lsp-enable-which-key-integration))
+  :hook ((python-mode . lsp))
   :commands (lsp lsp-deferred)
   :config
-  (setq lsp-log-io 1)
+  (setq lsp-log-io t)
   (setq lsp-pyls-configuration-sources ["flake8"])
+  (setq lsp-enable-file-watchers nil)
   (setq lsp-pyls-plugins-mccabe-enabled nil)
-  (lsp-register-client
-    (make-lsp-client :new-connection (lsp-tramp-connection "pyls")
-                     :major-modes '(python-mode)
-                     :remote? t
-                     :server-id 'pyls-remote))
+  (setq gc-cons-threshold 100000000)
+  (setq read-process-output-max (* 1024 1024)) ;; 1mb
+  (setq lsp-diagnostic-package :none)
+    ;;(lsp-register-client
+    ;;(make-lsp-client :new-connection (lsp-tramp-connection "pyls")
+    ;;                 :major-modes '(python-mode)
+    ;;                 :remote? t
+    ;;                 :server-id 'pyls-remote))
 
-  (lsp-register-client
-    (make-lsp-client :new-connection (lsp-tramp-connection "gopls")
-                     :major-modes '(go-mode)
-                     :remote? t
-                     :server-id 'gopls-remote))
-
-  (defun lsp-set-cfg ()
-    (let ((lsp-cfg '(:pyls (:configurationSources ("flake8")))))
-      (lsp--set-configuration lsp-cfg)))
-
-  (add-hook 'lsp-after-initialize-hook 'lsp-set-cfg))
+  )
 
 (use-package lsp-ui
   :requires lsp-mode flycheck
@@ -336,11 +331,6 @@ I unbind ~flyspell-mode-map~ because I use ~C-.~ for ~imenu-list~.
   :bind (:map lsp-ui-mode-map
          ([remap xref-find-definitions] . lsp-ui-peek-find-definitions)
          ([remap xref-find-references] . lsp-ui-peek-find-references)))
-
-(use-package company-lsp :commands company-lsp
-  :config
-  (setq company-minimum-prefix-length 1
-        company-idle-delay 0.0))
 
 #+END_SRC
 *** ~magit~
@@ -383,14 +373,6 @@ I unbind ~flyspell-mode-map~ because I use ~C-.~ for ~imenu-list~.
   (projectile-global-mode)
   (helm-projectile-on))
 #+END_SRC
-
-#+begin_src emacs-lisp
-(use-package quelpa-use-package)
-
-(use-package hideshowvis
-  :quelpa (hideshowvis :fetcher github :repo "sheijk/hideshowvis")
-  :hook (prog-mode . hideshowvis-minor-mode))
-#+end_src
 
 *** ~rainbow-delimeters~
 
@@ -591,9 +573,6 @@ https://www.emacswiki.org/emacs/WindMove
 (global-set-key (kbd "C-c d") 'make-directory)
 (setq backup-directory-alist `(("." . "~/.emacs.bak")))
 
-(require 'tramp)
-(add-to-list 'tramp-remote-path 'tramp-own-remote-path)
-
 (setenv "PINENTRY_USER_DATA" "USE_CURSES=0")
 #+END_SRC
 
@@ -631,9 +610,4 @@ Ensure that the proper shell is used on macOS. For me, this was the solution to:
 
 #+BEGIN_SRC emacs-lisp
 (setq custom-file "~/.emacs.d/generated.el")
-#+END_SRC
-
-*** ~vterm~
-#+BEGIN_SRC emacs-lisp
-(use-package vterm)
 #+END_SRC
