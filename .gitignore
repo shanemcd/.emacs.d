@@ -17,3 +17,5 @@
 /SessionDesktop.el
 /.extension/
 /.dap-breakpoints
+/eln-cache/
+/projects

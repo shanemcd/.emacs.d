@@ -76,7 +76,6 @@ keyword repeatedly.
   (setq org-src-fontify-natively t))
 #+END_SRC
 
-
 *** ~markdown-mode~
 #+BEGIN_SRC emacs-lisp
 (use-package markdown-mode
@@ -88,6 +87,7 @@ keyword repeatedly.
 #+BEGIN_SRC emacs-lisp
 (show-paren-mode)
 #+END_SRC
+
 *** ~yaml-mode~
 
 #+BEGIN_SRC emacs-lisp
@@ -95,6 +95,7 @@ keyword repeatedly.
   :config
   (setq yaml-indent-offset 2))
 #+END_SRC
+
 *** ~groovy-mode~
 #+BEGIN_SRC emacs-lisp
 (use-package groovy-mode
@@ -146,6 +147,7 @@ keyword repeatedly.
   :commands browse-at-remote
   :bind ("C-c g g" . browse-at-remote))
 #+END_SRC
+
 *** ~company~
 
  #+BEGIN_SRC emacs-lisp
@@ -183,18 +185,21 @@ keyword repeatedly.
    (bind-key "<tab>" #'dired-subtree-toggle dired-mode-map)
    (bind-key "<backtab>" #'dired-subtree-cycle dired-mode-map))
  #+END_SRC
+
 *** ~drag-stuff~
 #+BEGIN_SRC emacs-lisp
 (use-package drag-stuff
   :config
   (drag-stuff-define-keys))
 #+END_SRC
+
 *** ~dumb-jump~
 
  #+BEGIN_SRC emacs-lisp
  (use-package dumb-jump
    :config
-   (setq dumb-jump-selector 'helm))
+   (setq dumb-jump-selector 'helm)
+   (add-hook 'xref-backend-functions #'dumb-jump-xref-activate))
  #+END_SRC
 *** ~fill-column-indicator~
 #+BEGIN_SRC emacs-lisp
@@ -209,6 +214,7 @@ keyword repeatedly.
   :config
   (global-flycheck-mode))
 #+END_SRC
+
 *** ~flyspell~
 
 I unbind ~flyspell-mode-map~ because I use ~C-.~ for ~imenu-list~.
@@ -283,54 +289,6 @@ I unbind ~flyspell-mode-map~ because I use ~C-.~ for ~imenu-list~.
   :defer t)
 #+end_src
 
-*** ~lsp~
-#+BEGIN_SRC emacs-lisp
-(use-package lsp-mode
-  :init (setq lsp-keymap-prefix "s-l")
-  :hook ((python-mode . lsp))
-  :commands (lsp lsp-deferred)
-  :config
-  (setq lsp-log-io t)
-  (setq lsp-pyls-configuration-sources ["flake8"])
-  (setq lsp-enable-file-watchers nil)
-  (setq lsp-pyls-plugins-mccabe-enabled nil)
-  (setq gc-cons-threshold 100000000)
-  (setq read-process-output-max (* 1024 1024)) ;; 1mb
-  (setq lsp-diagnostic-package :none)
-    (lsp-register-client
-    (make-lsp-client :new-connection (lsp-tramp-connection "pyls")
-                     :major-modes '(python-mode)
-                     :remote? t
-                     :server-id 'pyls-remote)))
-
-(use-package lsp-ui
-  :requires lsp-mode flycheck
-  :commands lsp-ui-mode
-  :custom-face
-  (lsp-ui-doc-background ((t (:background nil))))
-  (lsp-ui-doc-header ((t (:inherit (font-lock-string-face italic)))))
-  :hook (lsp-mode-hook . lsp-ui-mode)
-  :custom
-  (lsp-ui-doc-enable t)
-  (lsp-ui-doc-use-childframe f)
-  (lsp-ui-flycheck-enable t)
-  (lsp-ui-flycheck-list-position 'right)
-  (lsp-ui-flycheck-live-reporting t)
-  (lsp-ui-peek-enable t)
-  (lsp-ui-peek-list-width 60)
-  (lsp-ui-peek-peek-height 25)
-  (lsp-ui-doc-header t)
-  (lsp-ui-doc-include-signature t)
-  (lsp-ui-doc-position 'top)
-  (lsp-ui-doc-border (face-foreground 'default))
-  (lsp-ui-sideline-enable t)
-  (lsp-ui-sideline-ignore-duplicate t)
-  (lsp-ui-sideline-show-code-actions t)
-  :bind (:map lsp-ui-mode-map
-         ([remap xref-find-definitions] . lsp-ui-peek-find-definitions)
-         ([remap xref-find-references] . lsp-ui-peek-find-references)))
-
-#+END_SRC
 *** ~magit~
 
 #+BEGIN_SRC emacs-lisp
@@ -343,16 +301,7 @@ I unbind ~flyspell-mode-map~ because I use ~C-.~ for ~imenu-list~.
 
 *** ~mwim~
 
- "Move where I mean" - ~C-a~ takes you to the first character on the line.
-
- #+BEGIN_SRC emacs-lisp
- (use-package mwim
-   :config
-   (global-set-key (kbd "C-a") 'mwim-beginning)
-   (global-set-key (kbd "C-e") 'mwim-end))
- #+END_SRC
-
-*** ~projectile~
+"Move where I mean" - ~C-a~ takes you to the first character on the line.
 
 #+BEGIN_SRC emacs-lisp
 (use-package projectile
@@ -448,38 +397,6 @@ I unbind ~flyspell-mode-map~ because I use ~C-.~ for ~imenu-list~.
        ("M-7" . 'winum-select-window-7)
        ("M-8" . 'winum-select-window-8))
   )
-#+END_SRC
-
-*** ~dap~
-#+BEGIN_SRC emacs-lisp
-(use-package dap-mode)
-(require 'dap-go)
-(setq dap-print-io t)
-(setq dap-go-delve-path "/Users/shanemcd/go/bin/dlv")
-(dap-auto-configure-mode)
-
-(dap-register-debug-template
-  "Remote Test"
-  (list :type "go"
-        :request "launch"
-        :name "Connect to Remote dlv"
-        :mode "remote"
-        :remotePath "/home/shanemcd/receptor/cmd/"
-        :apiVersion "2"
-        :host "localhost"
-        :port "2345"))
-
-(dap-register-debug-template
-  "Launch Receptor"
-  (list :type "go"
-        :request "launch"
-        :name "Launch Receptor"
-        :mode "debug"
-        :program "/Users/shanemcd/Development/ansible/receptor/cmd/"
-        :buildFlags "-gcflags '-N -l'"
-        :args "--node id=foo --local-only"
-        :env nil
-        :envFile nil))
 #+END_SRC
 
 ** Interface Customizations
@@ -613,16 +530,16 @@ Ensure that the proper shell is used on macOS. For me, this was the solution to:
 
 *** macOS Keybindings
 #+begin_src emacs-lisp
-(global-set-key [(hyper a)] 'mark-whole-buffer)
-(global-set-key [(hyper v)] 'yank)
-(global-set-key [(hyper c)] 'kill-ring-save)
-(global-set-key [(hyper x)] 'kill-region)
-(global-set-key [(hyper s)] 'save-buffer)
-(global-set-key [(hyper l)] 'goto-line)
-(global-set-key [(hyper w)]
+(global-set-key [(super a)] 'mark-whole-buffer)
+(global-set-key [(super v)] 'yank)
+(global-set-key [(super c)] 'kill-ring-save)
+(global-set-key [(super x)] 'kill-region)
+(global-set-key [(super s)] 'save-buffer)
+(global-set-key [(super l)] 'goto-line)
+(global-set-key [(super w)]
                 (lambda () (interactive) (delete-window)))
-(global-set-key [(hyper z)] 'undo)
+(global-set-key [(super z)] 'undo)
 
 (setq mac-option-modifier 'meta)
-(setq mac-command-modifier 'hyper)
+(setq mac-command-modifier 'super)
 #+end_src
