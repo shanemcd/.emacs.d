@@ -1,3 +1,4 @@
+
 * My Emacs Configuration
 
 ** Package management
@@ -301,7 +302,16 @@ I unbind ~flyspell-mode-map~ because I use ~C-.~ for ~imenu-list~.
 
 *** ~mwim~
 
-"Move where I mean" - ~C-a~ takes you to the first character on the line.
+ "Move where I mean" - ~C-a~ takes you to the first character on the line.
+
+ #+BEGIN_SRC emacs-lisp
+ (use-package mwim
+   :config
+   (global-set-key (kbd "C-a") 'mwim-beginning)
+   (global-set-key (kbd "C-e") 'mwim-end))
+ #+END_SRC
+
+*** ~projectile~
 
 #+BEGIN_SRC emacs-lisp
 (use-package projectile
