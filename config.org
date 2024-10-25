@@ -107,7 +107,6 @@ keyword repeatedly.
 *** ~rust~
 #+BEGIN_SRC emacs-lisp
 (use-package rust-mode)
-(use-package ob-rust)
 #+END_SRC
 
 *** ~swift~
@@ -170,7 +169,7 @@ keyword repeatedly.
 #+BEGIN_SRC emacs-lisp
 (global-set-key (kbd "C-x C-j") 'dired-jump)
 (add-hook 'dired-mode-hook 'dired-hide-details-mode)
-(use-package dired-single)
+;(use-package dired-single)
 (require 'dired-x)
 (setq-default dired-omit-files-p t) ; Buffer-local variable
 (setq dired-omit-files (concat dired-omit-files "\\|^\\..+$"))
@@ -237,7 +236,7 @@ I unbind ~flyspell-mode-map~ because I use ~C-.~ for ~imenu-list~.
 (use-package helm
   :config
   (require 'helm)
-  (require 'helm-config)
+  ;(require 'helm-config)
   (helm-mode t)
 
   (global-set-key (kbd "M-x") 'helm-M-x)
