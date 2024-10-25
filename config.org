@@ -34,6 +34,20 @@ keyword repeatedly.
 (setq use-package-always-ensure t)
 #+END_SRC
 
+** LLM
+
+*** ~ellama~
+#+BEGIN_SRC emacs-lisp
+(use-package ellama
+  :bind ("C-c e" . ellama-transient-main-menu)
+  :init
+  (require 'llm-ollama)
+  (setopt ellama-provider
+	  (make-llm-ollama
+	   :chat-model "llama3.1"
+	   :embedding-model "llama3.1")))
+#+END_SRC
+
 ** Text and Programming Modes
 
 *** ~python-mode~
