@@ -7,6 +7,12 @@ There have been several times when ~package-refresh-contents~ does not fix a
 "Bad Request" errror from the default mirrors. These seem to be more reliable:
 
 #+BEGIN_SRC emacs-lisp
+(setq server-use-tcp t)
+(setq server-auth-key (getenv "EMACS_SERVER_AUTH_KEY"))
+(setq server-port 52698)
+
+(server-start)
+
 (require 'package)
 (setq package-enable-at-startup nil)
 (setq package-archives
@@ -89,6 +95,9 @@ keyword repeatedly.
   (setq org-startup-folded nil)
   (setq org-odt-preferred-output-format "docx")
   (setq org-src-fontify-natively t))
+
+(use-package ox-gfm)
+
 #+END_SRC
 
 *** ~markdown-mode~
@@ -121,6 +130,7 @@ keyword repeatedly.
 *** ~rust~
 #+BEGIN_SRC emacs-lisp
 (use-package rust-mode)
+(use-package ob-rust)
 #+END_SRC
 
 *** ~swift~
