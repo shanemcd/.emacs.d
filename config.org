@@ -1,4 +1,3 @@
-
 * My Emacs Configuration
 
 ** Package management
@@ -12,6 +11,15 @@ There have been several times when ~package-refresh-contents~ does not fix a
 (setq server-port 52698)
 
 (server-start)
+
+;; Function to open a frame after Emacs daemon starts
+(defun open-initial-frame ()
+  "Open a new frame on startup."
+  (when (daemonp)
+    (make-frame '((display . "mac"))))) ;; Adjust "mac" if needed, depending on your display configuration
+
+;; Run the function after the daemon starts
+(add-hook 'after-init-hook 'open-initial-frame)
 
 (require 'package)
 (setq package-enable-at-startup nil)
