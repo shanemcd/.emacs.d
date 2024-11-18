@@ -195,9 +195,9 @@ keyword repeatedly.
 (add-hook 'dired-mode-hook 'dired-hide-details-mode)
 ;(use-package dired-single)
 (require 'dired-x)
+(add-hook 'dired-mode-hook 'dired-omit-mode)
 (setq-default dired-omit-files-p t) ; Buffer-local variable
 (setq dired-omit-files (concat dired-omit-files "\\|^\\..+$"))
-(setq dired-omit-mode t)
 #+END_SRC
 
 **** ~dired-subtree~
