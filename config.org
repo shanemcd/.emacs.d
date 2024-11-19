@@ -462,7 +462,7 @@ I unbind ~flyspell-mode-map~ because I use ~C-.~ for ~imenu-list~.
 https://github.com/mozilla/Fira
 
 #+BEGIN_SRC emacs-lisp
-(add-to-list 'default-frame-alist '(font . "Fira Mono"))
+(add-to-list 'default-frame-alist '(font . "Fira Code"))
 #+END_SRC
 
 *** Hide Splash Screen
