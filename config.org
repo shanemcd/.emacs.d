@@ -83,10 +83,10 @@ keyword repeatedly.
   :config
   (require 'org-tempo)
   (setq org-directory "~/org")
-  (setq org-agenda-files (directory-files-recursively "~/Dropbox/org/agenda/" "\\.org$"))
+  (setq org-agenda-files (directory-files-recursively "~/org/agenda/" "\\.org$"))
   (setq org-use-speed-commands t)
   (setq org-capture-templates
-      '(("t" "Todo" entry (file+headline "~/Dropbox/org/agenda/incoming.org" "Tasks")
+      '(("t" "Todo" entry (file+headline "~/org/agenda/incoming.org" "Tasks")
          "* TODO %?\n  %i\n  %a")))
   (setq org-refile-targets '((org-agenda-files :maxlevel . 3)))
   (setq org-imenu-depth 3)
