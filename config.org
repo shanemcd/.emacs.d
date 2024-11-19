@@ -96,7 +96,6 @@ keyword repeatedly.
      (emacs-lisp . t)
      (js         . t)
      (ruby       . t)
-     (rust       . t)
      (swift      . t)
      (python     . t)))
   (setq org-babel-python-command "python3")
@@ -133,12 +132,6 @@ keyword repeatedly.
 (use-package groovy-mode
   :config
   (setq groovy-indent-offset 2))
-#+END_SRC
-
-*** ~rust~
-#+BEGIN_SRC emacs-lisp
-(use-package rust-mode)
-(use-package ob-rust)
 #+END_SRC
 
 *** ~swift~
