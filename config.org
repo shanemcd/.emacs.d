@@ -6,16 +6,16 @@ There have been several times when ~package-refresh-contents~ does not fix a
 "Bad Request" errror from the default mirrors. These seem to be more reliable:
 
 #+BEGIN_SRC emacs-lisp
-(setq server-use-tcp t)
-(setq server-auth-key (getenv "EMACS_SERVER_AUTH_KEY"))
-(setq server-port 52698)
-
-(server-start)
-
 ;; Function to open a frame after Emacs daemon starts
 (defun open-initial-frame ()
   "Open a new frame on startup."
   (when (daemonp)
+    (setq server-use-tcp t)
+    (setq server-auth-key (getenv "EMACS_SERVER_AUTH_KEY"))
+    (setq server-port 52698)
+
+    (server-start)
+
     (make-frame '((display . "mac"))))) ;; Adjust "mac" if needed, depending on your display configuration
 
 ;; Run the function after the daemon starts
@@ -23,10 +23,10 @@ There have been several times when ~package-refresh-contents~ does not fix a
 
 (require 'package)
 (setq package-enable-at-startup nil)
-;; (setq package-archives
-;;       '(("melpa" . "https://raw.githubusercontent.com/d12frosted/elpa-mirror/master/melpa/")
-;;         ("org"   . "https://raw.githubusercontent.com/d12frosted/elpa-mirror/master/org/")
-;;         ("gnu"   . "https://raw.githubusercontent.com/d12frosted/elpa-mirror/master/gnu/")))
+(setq package-archives
+      '(("melpa" . "https://raw.githubusercontent.com/d12frosted/elpa-mirror/master/melpa/")
+        ("org"   . "https://raw.githubusercontent.com/d12frosted/elpa-mirror/master/org/")
+        ("gnu"   . "https://raw.githubusercontent.com/d12frosted/elpa-mirror/master/gnu/")))
 #+END_SRC
 
 *** Bootstrap and configure ~use-package~
@@ -48,21 +48,27 @@ keyword repeatedly.
 (setq use-package-always-ensure t)
 #+END_SRC
 
+#+begin_src emacs-lisp 
+(use-package delight)
+#+end_src
+
 ** LLM
 
 *** ~ellama~
+
 #+BEGIN_SRC emacs-lisp
 (use-package ellama
   :bind ("C-c e" . ellama-transient-main-menu)
   :init
   (require 'llm-ollama)
   (setopt ellama-provider
-	  (make-llm-ollama
-	   :chat-model "llama3.1"
-	   :embedding-model "llama3.1")))
+	      (make-llm-ollama
+	       :chat-model "llama3.1"
+	       :embedding-model "llama3.1")))
 #+END_SRC
 
 ** Text and Programming Modes
+
 
 *** ~python-mode~
 #+BEGIN_SRC emacs-lisp
@@ -77,17 +83,21 @@ keyword repeatedly.
 (use-package org
   :mode ("\\.org\\'" . org-mode)
   :bind (("C-c l" . org-store-link)
-	 ("C-c c" . org-capture)
-	 ("C-c a" . org-agenda)
-	 ("C-c C-w" . org-refile))
+         ("C-c c" . org-capture)
+         ("C-c a" . org-agenda)
+         ("C-c C-w" . org-refile))
   :config
   (require 'org-tempo)
   (setq org-directory "~/org")
-  (setq org-agenda-files (directory-files-recursively "~/org/agenda/" "\\.org$"))
+  (setq org-agenda-files (directory-files-recursively "~/org/" "\\.org$"))
   (setq org-use-speed-commands t)
-  (setq org-capture-templates
-      '(("t" "Todo" entry (file+headline "~/org/agenda/incoming.org" "Tasks")
-         "* TODO %?\n  %i\n  %a")))
+  (setq org-startup-with-inline-images t)
+  (setq org-capture-templates '(
+                                ("t" "TODO" entry (file+headline "~/org/incoming.org" "TODOs") "** TODO %?\n  %i\n  %a")
+                                ("e" "Log entry" entry (file+headline "~/org/log.org" "Log") "** %?\n  %i\n  %a")
+                                ("p" "Private note" entry (file+headline "~/org/journal.org" "Notes") "** %?\n  %i\n  %a")
+                                ))
+
   (setq org-refile-targets '((org-agenda-files :maxlevel . 3)))
   (setq org-imenu-depth 3)
   (org-babel-do-load-languages
@@ -97,11 +107,17 @@ keyword repeatedly.
      (js         . t)
      (ruby       . t)
      (swift      . t)
+     (mermaid . t)
      (python     . t)))
   (setq org-babel-python-command "python3")
   (setq org-startup-folded nil)
   (setq org-odt-preferred-output-format "docx")
-  (setq org-src-fontify-natively t))
+  (setq org-src-fontify-natively t
+        org-src-window-setup 'current-window
+        org-src-strip-leading-and-trailing-blank-lines t
+        org-src-preserve-indentation t
+        org-src-tab-acts-natively t)
+  )
 
 (use-package ox-gfm)
 
@@ -155,7 +171,19 @@ keyword repeatedly.
 #+BEGIN_SRC emacs-lisp
 (use-package dockerfile-mode)
 #+END_SRC
+*** ~ob-mermaid~
+#+begin_src emacs-lisp
+(use-package ob-mermaid)
+#+end_src
 
+
+** Terminal Emulation
+
+*** ~vterm~
+
+#+begin_src emacs-lisp
+(use-package vterm)
+#+end_src
 ** Tabs and Spaces
 
 #+BEGIN_SRC emacs-lisp
@@ -175,13 +203,13 @@ keyword repeatedly.
 
 *** ~company~
 
- #+BEGIN_SRC emacs-lisp
- (use-package company
-   :config
-   (setq company-minimum-prefix-length 1)
-   (global-company-mode t)
-   (setq company-global-modes '(not org-mode)))
- #+END_SRC
+#+BEGIN_SRC emacs-lisp
+(use-package company
+  :config
+  (setq company-minimum-prefix-length 1)
+  (global-company-mode t)
+  (setq company-global-modes '(not org-mode)))
+#+END_SRC
 
 *** ~dired~
 
@@ -203,13 +231,13 @@ keyword repeatedly.
 
 **** ~dired-subtree~
 
- #+BEGIN_SRC emacs-lisp
- (use-package dired-subtree
-   :after dired
-   :config
-   (bind-key "<tab>" #'dired-subtree-toggle dired-mode-map)
-   (bind-key "<backtab>" #'dired-subtree-cycle dired-mode-map))
- #+END_SRC
+#+BEGIN_SRC emacs-lisp
+(use-package dired-subtree
+  :after dired
+  :config
+  (bind-key "<tab>" #'dired-subtree-toggle dired-mode-map)
+  (bind-key "<backtab>" #'dired-subtree-cycle dired-mode-map))
+#+END_SRC
 
 *** ~drag-stuff~
 #+BEGIN_SRC emacs-lisp
@@ -220,12 +248,12 @@ keyword repeatedly.
 
 *** ~dumb-jump~
 
- #+BEGIN_SRC emacs-lisp
- (use-package dumb-jump
-   :config
-   (setq dumb-jump-selector 'helm)
-   (add-hook 'xref-backend-functions #'dumb-jump-xref-activate))
- #+END_SRC
+#+BEGIN_SRC emacs-lisp
+(use-package dumb-jump
+  :config
+  (setq dumb-jump-selector 'helm)
+  (add-hook 'xref-backend-functions #'dumb-jump-xref-activate))
+#+END_SRC
 *** ~fill-column-indicator~
 #+BEGIN_SRC emacs-lisp
 (use-package fill-column-indicator
@@ -244,24 +272,23 @@ keyword repeatedly.
 
 I unbind ~flyspell-mode-map~ because I use ~C-.~ for ~imenu-list~.
 
- #+BEGIN_SRC emacs-lisp
- (use-package flyspell
-   :defer t
-   :config
+#+BEGIN_SRC emacs-lisp
+(use-package flyspell
+  :defer t
+  :config
 
-   (add-hook 'prog-mode-hook 'flyspell-prog-mode)
-   (add-hook 'text-mode-hook 'flyspell-mode)
-   (add-hook 'markdown-mode-hook 'flyspell-mode)
-   (define-key flyspell-mode-map (kbd "C-.") nil))
- #+END_SRC
+  (add-hook 'prog-mode-hook 'flyspell-prog-mode)
+  (add-hook 'text-mode-hook 'flyspell-mode)
+  (add-hook 'markdown-mode-hook 'flyspell-mode)
+  (define-key flyspell-mode-map (kbd "C-.") nil))
+#+END_SRC
 
 *** ~helm~
 
 #+BEGIN_SRC emacs-lisp
 (use-package helm
+  :delight
   :config
-  (require 'helm)
-  ;(require 'helm-config)
   (helm-mode t)
 
   (global-set-key (kbd "M-x") 'helm-M-x)
@@ -273,7 +300,9 @@ I unbind ~flyspell-mode-map~ because I use ~C-.~ for ~imenu-list~.
 
   (setq helm-ff-auto-update-initial-value nil)
   (setq helm-mode-fuzzy-match t)
-  (setq helm-completion-in-region-fuzzy-match t))
+  (setq helm-completion-in-region-fuzzy-match t)
+  (setq helm-move-to-line-cycle-in-source nil)
+  )
 #+END_SRC
 
 **** ~helm-ag~
@@ -326,14 +355,14 @@ I unbind ~flyspell-mode-map~ because I use ~C-.~ for ~imenu-list~.
 
 *** ~mwim~
 
- "Move where I mean" - ~C-a~ takes you to the first character on the line.
+"Move where I mean" - ~C-a~ takes you to the first character on the line.
 
- #+BEGIN_SRC emacs-lisp
- (use-package mwim
-   :config
-   (global-set-key (kbd "C-a") 'mwim-beginning)
-   (global-set-key (kbd "C-e") 'mwim-end))
- #+END_SRC
+#+BEGIN_SRC emacs-lisp
+(use-package mwim
+  :config
+  (global-set-key (kbd "C-a") 'mwim-beginning)
+  (global-set-key (kbd "C-e") 'mwim-end))
+#+END_SRC
 
 *** ~projectile~
 
@@ -371,31 +400,51 @@ I unbind ~flyspell-mode-map~ because I use ~C-.~ for ~imenu-list~.
 
 *** ~undo-tree~
 
- Provides the helpful ~undo-tree-visualize~ function. https://www.emacswiki.org/emacs/UndoTree
+Provides the helpful ~undo-tree-visualize~ function. https://www.emacswiki.org/emacs/UndoTree
 
- #+BEGIN_SRC emacs-lisp
- (use-package undo-tree
-   :init
-   (undo-tree-mode))
- #+END_SRC
+#+BEGIN_SRC emacs-lisp
+(use-package undo-tree
+  :init
+  (undo-tree-mode))
+#+END_SRC
+
+*** ~neotree~
+#+BEGIN_SRC emacs-lisp
+(use-package all-the-icons)
+(use-package neotree
+  :config
+  (setq neo-autorefresh t)
+  (setq neo-window-fixed-size nil)
+  (setq neo-reset-size-on-open nil)
+  (eval-after-load "neotree"
+    '(add-to-list 'window-size-change-functions
+                  (lambda (frame)
+                    (let ((neo-window (neo-global--get-window)))
+                      (unless (null neo-window)
+                        (setq neo-window-width (window-width neo-window)))))))
+  (setq neo-theme (if (display-graphic-p) 'icons 'arrow))
+  :bind
+  (:map global-map
+	("s-t"   . neotree-toggle)))
+#+END_SRC
 
 *** ~which-key~
 
- #+BEGIN_SRC emacs-lisp
- (use-package which-key
-   :config
-   (which-key-mode)
-   (which-key-setup-minibuffer))
- #+END_SRC
+#+BEGIN_SRC emacs-lisp
+(use-package which-key
+  :config
+  (which-key-mode)
+  (which-key-setup-minibuffer))
+#+END_SRC
 
 *** ~ws-butler~
 
 
- #+BEGIN_SRC emacs-lisp
- (use-package ws-butler
-   :config
-   (ws-butler-global-mode t))
- #+END_SRC
+#+BEGIN_SRC emacs-lisp
+(use-package ws-butler
+  :config
+  (ws-butler-global-mode t))
+#+END_SRC
 
 *** ~wttrin~
 #+BEGIN_SRC emacs-lisp
@@ -466,9 +515,9 @@ https://github.com/mozilla/Fira
 
 *** Show column number in modeline
 
- #+BEGIN_SRC emacs-lisp
- (setq column-number-mode t)
- #+END_SRC
+#+BEGIN_SRC emacs-lisp
+(setq column-number-mode t)
+#+END_SRC
 
 *** Show Line Numbers
 
@@ -490,32 +539,13 @@ https://github.com/mozilla/Fira
   (load-theme 'base16-material t))
 #+END_SRC
 
-*** ~neotree~
-#+BEGIN_SRC emacs-lisp
-(use-package all-the-icons)
-(use-package neotree
-  :config
-  (setq neo-autorefresh t)
-  (setq neo-window-fixed-size nil)
-  (setq neo-reset-size-on-open nil)
-  (eval-after-load "neotree"
-    '(add-to-list 'window-size-change-functions
-                  (lambda (frame)
-                    (let ((neo-window (neo-global--get-window)))
-                      (unless (null neo-window)
-                        (setq neo-window-width (window-width neo-window)))))))
-  (setq neo-theme (if (display-graphic-p) 'icons 'arrow))
-  :bind
-  (:map global-map
-	("s-t"   . neotree-toggle)))
-#+END_SRC
-
 *** Wind Move
 https://www.emacswiki.org/emacs/WindMove
 #+BEGIN_SRC emacs-lisp
 (when (fboundp 'windmove-default-keybindings)
   (windmove-default-keybindings))
 #+END_SRC
+** Interface Customizations
 ** Misc
 
 #+BEGIN_SRC emacs-lisp
@@ -540,7 +570,6 @@ Ensure that the proper shell is used on macOS. For me, this was the solution to:
 
 #+BEGIN_SRC emacs-lisp
 (use-package exec-path-from-shell
-  :if (memq window-system '(mac ns))
   :config
   (setq exec-path-from-shell-arguments '("-l"))
   (setenv "SHELL" "/bin/zsh")
