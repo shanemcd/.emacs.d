@@ -1,0 +1,930 @@
+* My Emacs Configuration
+
+Hello. This is my [[https://www.gnu.org/software/emacs/][Emacs]] configuration. It's both documentation and code in one
+place, a paradigm referred to as [[https://en.wikipedia.org/wiki/Literate_programming][Literate programming]].
+
+** How it works
+
+When Emacs starts it runs the code in [[file:init.el][init.el]]. Rather than storing the
+configuration here directly, we have this line:
+
+#+begin_src emacs-lisp :tangle no
+(org-babel-load-file "~/.emacs.d/readme.org")
+#+end_src
+
+That then loads /this/ file, which will /tangle/ and then /evaluate/ every ~emacs-lisp~
+code block in here, unless it is explicitly marked with ~:tangle no~, as is true
+with the example above.
+
+Note that evaluating this file with ~org-babel-load-file~ will result in some
+variables being set unless we set the variable below.  Instead of cluttering up
+this file, we will write the generated code to a new file that can be easily
+ignored:
+
+#+begin_src emacs-lisp
+(setq custom-file "~/.emacs.d/generated.el")
+#+end_src
+
+** Set up a package management system
+
+#+begin_src emacs-lisp
+(require 'package)
+
+(add-to-list 'package-archives
+    '("MELPA" .
+      "http://melpa.org/packages/"))
+
+(setq package-enable-at-startup nil)
+
+(unless (package-installed-p 'use-package)
+  (package-refresh-contents)
+  (package-install 'use-package))
+
+(eval-when-compile
+  (require 'use-package))
+
+(require 'use-package-ensure)
+(setq use-package-always-ensure t)
+#+end_src
+
+** Make a frame if we're running daemonized
+
+Note that I set ~EMACS_SERVER_AUTH_KEY~ and launch emacs via ~launchctl~. Since I
+currently only run emacs as a daemon on macOS I do not have any conditional
+logic here.
+
+#+begin_src emacs-lisp
+(defun open-initial-frame-when-daemonized ()
+  (when (daemonp)
+    (setq server-use-tcp t)
+    (setq server-auth-key (getenv "EMACS_SERVER_AUTH_KEY"))
+    (setq server-port 52698)
+
+    (server-start)
+
+    (make-frame '((display . "mac"))))) ;; Adjust "mac" if needed, depending on your display configuration
+
+;; Run the function after the daemon starts
+(add-hook 'after-init-hook 'open-initial-frame-when-daemonized)
+#+end_src
+
+*** Why am I doing this?
+
+My workflow is built around the assumption that the code I am working on may or
+may not be local to the machine I am working on.
+
+For cases where I need to work remotely, I use [[https://www.gnu.org/software/tramp/][tramp]]. This mostly works fine,
+but there are times where I am SSH'd into a remote machine where my code is
+hosted via a terminal, and I would like a way to open a file or directory in
+Emacs without having to switch contexts to copy / paste a path between the
+applications.
+
+By starting the server below listening via TCP, we are able to open reverse
+emacsclient connections back to ourselves using this ZSH function:
+
+#+begin_src sh
+#!/bin/env zsh
+function re {
+    # Get the number of arguments
+    local num_args=$#
+
+    # If no arguments are provided, exit the function
+    if [ $num_args -eq 0 ]; then
+        echo "🤖 re (remote? reverse? emacsclient) 🤖"
+        echo "Usage: re [emacsclient options] <path>"
+        return 1
+    fi
+
+    # Extract the last argument as the path
+    local tramppath="$1"
+
+    # Check if a valid path was provided (should be the first arg)
+    if [ -z "$tramppath" ]; then
+        echo "Error: No path provided."
+        return 1
+    fi
+
+    # Run the emacsclient command with -cn option and --server-file and /sshx options
+    emacsclient -cn --server-file ~/server /sshx:$(hostname):$tramppath
+}
+#+end_src
+
+** Other stuff that should run early
+**** ~delight~
+
+https://elpa.gnu.org/packages/delight.html
+
+This package makes the mode line less noisy by allowing us to hide certain minor
+modes. We'll call this early so we can use as-needed, by using the ~delight~
+keyword when calling ~use-package~.
+
+#+begin_src emacs-lisp
+(use-package delight)
+#+end_src
+
+** Install some packages
+*** Text and programming modes
+**** ~python-mode~
+
+#+BEGIN_SRC emacs-lisp
+(setq python-shell-interpreter "/Users/shanemcd/.pyenv/shims/python"
+      flycheck-python-pycompile-executable "/Users/shanemcd/.pyenv/shims/python"
+      python-shell-exec-path "/Users/shanemcd/.pyenv/shims/python")
+#+END_SRC
+
+**** ~markdown-mode~
+#+BEGIN_SRC emacs-lisp
+
+(use-package markdown-mode
+  :config
+  (setq markdown-fontify-code-blocks-natively t))
+#+END_SRC
+
+**** ~show-paren-mode~
+
+#+BEGIN_SRC emacs-lisp
+(show-paren-mode)
+#+END_SRC
+
+**** ~yaml-mode~
+
+#+BEGIN_SRC emacs-lisp
+(use-package yaml-mode
+  :config
+  (setq yaml-indent-offset 2))
+#+END_SRC
+
+**** ~groovy-mode~
+
+#+BEGIN_SRC emacs-lisp
+(use-package groovy-mode
+  :config
+  (setq groovy-indent-offset 2))
+#+END_SRC
+
+**** ~swift~
+
+#+BEGIN_SRC emacs-lisp
+(use-package swift-mode)
+(use-package ob-swift)
+#+END_SRC
+
+**** ~go~
+
+#+BEGIN_SRC emacs-lisp
+
+(use-package go-mode
+  :config
+  (add-hook 'go-mode-hook
+            (lambda ()
+              (setq indent-tabs-mode 1)
+              (setq tab-width 8))))
+(use-package ob-go)
+#+END_SRC
+
+**** ~dockerfile-mode~
+
+#+BEGIN_SRC emacs-lisp
+(use-package dockerfile-mode)
+#+END_SRC
+
+**** ~ob-mermaid~
+
+#+begin_src emacs-lisp
+(use-package ob-mermaid)
+#+end_src
+
+*** Org Mode
+**** ~org-mode~
+
+#+BEGIN_SRC emacs-lisp
+(use-package org
+  :mode ("\\.org\\'" . org-mode)
+  :bind (("C-c l" . org-store-link)
+         ("C-c c" . org-capture)
+         ("C-c C-w" . org-refile))
+  :config
+  (require 'org-tempo)
+  (setq org-directory "~/org")
+  (setq org-agenda-skip-unavailable-files t)
+  (setq org-agenda-files (directory-files-recursively "~/org/" "\\.org$"))
+  (setq org-use-speed-commands t)
+  (setq org-startup-with-inline-images t)
+  (setq org-capture-templates '(
+                                ("t" "TODO" entry (file+headline "~/org/incoming.org" "TODOs") "** TODO %?\n  %i\n  %a")
+                                ("e" "Log entry" entry (file+headline "~/org/log.org" "Log") "** %?\n  %i\n  %a")
+                                ("p" "Private note" entry (file+headline "~/org/journal.org" "Notes") "** %?\n  %i\n  %a")
+                                ))
+
+  (setq org-refile-targets '((org-agenda-files :maxlevel . 3)))
+  (setq org-imenu-depth 3)
+  (org-babel-do-load-languages
+   'org-babel-load-languages
+   '((shell      . t)
+     (emacs-lisp . t)
+     (js         . t)
+     (ruby       . t)
+     (swift      . t)
+     (mermaid . t)
+     (python     . t)))
+  (setq org-babel-python-command "python3")
+  (setq org-startup-folded t)
+  (setq org-odt-preferred-output-format "docx")
+  (setq org-src-fontify-natively t
+        org-src-window-setup 'current-window
+        org-src-strip-leading-and-trailing-blank-lines t
+        org-src-preserve-indentation t
+        org-hide-emphasis-markers t
+        org-src-tab-acts-natively t))
+
+(use-package org-appear
+  :after org
+  :hook (org-mode . org-appear-mode)
+  :config
+  (setq org-appear-autolinks t))
+
+(defun my/org-roam-capture-finished ()
+  "Function to run after an Org-roam capture is finalized."
+  (setq org-agenda-files (directory-files-recursively "~/org/" "\\.org$")))
+
+(use-package org-roam
+  :after org
+  :config
+  (setq org-roam-directory (file-truename "~/org/roam"))
+  (org-roam-db-autosync-mode)
+  (setq org-roam-node-display-template "${title:*} ${tags:20}")
+  (add-hook 'org-capture-after-finalize-hook 'my/org-roam-capture-finished)
+  :bind (("C-c r b" . org-roam-buffer-toggle)
+         ("C-c r f" . org-roam-node-find)))
+
+(use-package org-modern
+  :after org
+  :hook (org-mode . global-org-modern-mode))
+#+END_SRC
+
+**** ~ox-gfm~
+
+https://github.com/larstvei/ox-gfm
+
+#+begin_src emacs-lisp
+(use-package ox-gfm)
+#+end_src
+
+*** Terminal Emulation
+**** ~vterm~
+
+#+begin_src emacs-lisp
+(use-package vterm)
+#+end_src
+
+*** Interface Customizations
+**** Columns
+
+#+BEGIN_SRC emacs-lisp
+(add-hook 'markdown-mode-hook 'auto-fill-mode)
+
+(setq-default fill-column 80)
+#+END_SRC
+
+**** Disable Native UI Controls
+
+#+BEGIN_SRC emacs-lisp
+(tool-bar-mode -1)
+(menu-bar-mode -1)
+(scroll-bar-mode -1)
+#+END_SRC
+
+**** Font
+
+https://github.com/tonsky/FiraCode
+
+#+BEGIN_SRC emacs-lisp
+(add-to-list 'default-frame-alist '(font . "Fira Code"))
+#+END_SRC
+
+**** Hide Splash Screen
+
+#+BEGIN_SRC emacs-lisp
+(setq inhibit-splash-screen t)
+#+END_SRC
+
+**** Show column number in modeline
+
+#+BEGIN_SRC emacs-lisp
+(setq column-number-mode t)
+#+END_SRC
+
+**** Show Line Numbers
+
+#+BEGIN_SRC emacs-lisp
+;; (global-display-line-numbers-mode)
+#+END_SRC
+
+**** Theme
+
+#+BEGIN_SRC emacs-lisp
+(use-package base16-theme
+  :config
+  (load-theme 'base16-tomorrow-night t))
+#+END_SRC
+
+**** Wind Move
+https://www.emacswiki.org/emacs/WindMove
+
+#+BEGIN_SRC emacs-lisp
+(when (fboundp 'windmove-default-keybindings)
+  (windmove-default-keybindings))
+#+END_SRC
+
+**** Enable clicking in the fringe to toggle bookmarks
+#+begin_src emacs-lisp
+(defun my-toggle-emacs-bookmark (event)
+  "Toggle an Emacs bookmark at the line clicked."
+  (interactive "e")
+  (let* ((pos (posn-point (event-start event)))
+         (line (line-number-at-pos pos))
+         (bookmark-name (format "Line %d in %s" line (buffer-name))))
+    (save-excursion
+      (goto-char pos)
+      (if (bookmark-get-bookmark bookmark-name t)
+          (progn
+            (bookmark-delete bookmark-name)
+            (message "Deleted bookmark: %s" bookmark-name))
+        (bookmark-set bookmark-name)
+        (message "Set bookmark: %s" bookmark-name)))))
+
+(global-set-key [left-fringe mouse-1] #'my-toggle-emacs-bookmark)
+#+end_src
+
+**** Fancy mode line
+
+#+begin_src emacs-lisp
+
+#+end_src
+
+#+RESULTS:
+: t
+
+**** Increase spacing / padding of windows and frames
+#+begin_src emacs-lisp
+(use-package spacious-padding
+  :config
+  (spacious-padding-mode))
+#+end_src
+**** Start full-screen
+ 
+#+begin_src emacs-lisp
+(toggle-frame-fullscreen)
+#+end_src
+**** Writing environment
+#+begin_src emacs-lisp
+(use-package olivetti)
+#+end_src
+**** Whitespace
+
+#+BEGIN_SRC emacs-lisp
+(setq-default indent-tabs-mode nil tab-width 4)
+
+(use-package sh-script
+  :mode "\\.sh\\'"
+  :config (setq sh-indentation 4 sh-basic-offset 4))
+#+END_SRC
+
+**** Require newlines at end of files
+
+#+BEGIN_SRC emacs-lisp
+(setq require-final-newline t)
+#+END_SRC
+
+*** LLM
+**** ~ellama~
+
+#+begin_src emacs-lisp
+(use-package ellama
+  :bind ("C-c e" . ellama-transient-main-menu)
+  :init
+  (require 'llm-ollama)
+  (setopt ellama-provider
+	  (make-llm-ollama
+	   :chat-model "gemma2:9b"
+	   :embedding-model "gemma2:9b")))
+#+end_src
+
+*** To be filed or tossed away at some point...
+**** ~browse-at-remote~
+
+#+BEGIN_SRC emacs-lisp
+(use-package browse-at-remote
+  :commands browse-at-remote
+  :bind ("C-c g g" . browse-at-remote))
+#+END_SRC
+
+**** ~company~
+
+#+BEGIN_SRC emacs-lisp
+(use-package company
+  :delight
+  :config
+  (setq company-minimum-prefix-length 1)
+  (global-company-mode t)
+  (setq company-global-modes '(not org-mode)))
+#+END_SRC
+
+**** ~dired~
+
+- Set up key binding for ~dired-jump~.
+  - If you enter a file from dired and press this shortcut, you will pop back
+    into the dired buffer
+- Only show filenames in dired by default, hiding the permissions and other
+  details. Press ~(~ to show details.
+
+#+BEGIN_SRC emacs-lisp
+(global-set-key (kbd "C-x C-j") 'dired-jump)
+(add-hook 'dired-mode-hook 'dired-hide-details-mode)
+;(use-package dired-single)
+(require 'dired-x)
+(add-hook 'dired-mode-hook 'dired-omit-mode)
+(setq-default dired-omit-files-p t) ; Buffer-local variable
+(setq dired-omit-files (concat dired-omit-files "\\|^\\..+$"))
+#+END_SRC
+
+***** ~dired-subtree~
+
+#+BEGIN_SRC emacs-lisp
+(use-package dired-subtree
+  :after dired
+  :config
+  (bind-key "<tab>" #'dired-subtree-toggle dired-mode-map)
+  (bind-key "<backtab>" #'dired-subtree-cycle dired-mode-map))
+#+END_SRC
+
+**** ~drag-stuff~
+#+BEGIN_SRC emacs-lisp
+(use-package drag-stuff
+  :config
+  (drag-stuff-define-keys))
+#+END_SRC
+
+**** ~dumb-jump~
+
+#+BEGIN_SRC emacs-lisp
+(use-package dumb-jump
+  :config
+  ;(setq dumb-jump-selector 'helm)
+  (add-hook 'xref-backend-functions #'dumb-jump-xref-activate))
+#+END_SRC
+**** ~fill-column-indicator~
+
+#+BEGIN_SRC emacs-lisp
+(use-package fill-column-indicator
+  :config
+  (setq-default fci-rule-column 80)
+  (setq fci-rule-color (face-attribute 'highlight :background)))
+#+END_SRC
+
+**** ~flycheck~
+#+BEGIN_SRC emacs-lisp
+(use-package flycheck
+  :delight
+  :config
+  (global-flycheck-mode))
+#+END_SRC
+
+**** ~flyspell~
+
+I unbd ~flyspell-mode-map~ because I use ~C-.~ for ~imenu-list~.
+
+#+BEGIN_SRC emacs-lisp
+(use-package flyspell
+  :delight
+  :ensure f
+  :config
+  (add-hook 'prog-mode-hook 'flyspell-prog-mode)
+  (add-hook 'text-mode-hook 'flyspell-mode)
+  (add-hook 'markdown-mode-hook 'flyspell-mode))
+#+END_SRC
+
+**** ~htmlize~
+
+#+BEGIN_SRC emacs-lisp
+(use-package htmlize
+  :commands (htmlize-buffer
+	     htmlize-file
+	     htmlize-many-files
+	     htmlize-many-files-dired
+	     htmlize-region))
+#+END_SRC
+
+**** ~imenu-list~
+
+#+BEGIN_SRC emacs-lisp
+(use-package imenu-list
+  :bind
+  (("C-." . imenu-list-smart-toggle))
+  :config
+  (setq imenu-list-focus-after-activation t))
+ #+END_SRC
+
+**** ~tramp~
+
+#+begin_src emacs-lisp
+(use-package tramp
+  :defer t)
+#+end_src
+
+**** ~magit~
+
+#+BEGIN_SRC emacs-lisp
+(use-package magit
+  :bind ("C-x g" . magit)
+  :commands magit-project-status)
+
+(use-package project
+  :bind
+  (:map project-prefix-map
+        ("m" . magit-project-status))
+  :config
+  (add-to-list 'project-switch-commands '(magit-project-status "Magit") t))
+#+END_SRC
+
+**** ~mwim~
+
+"Move where I mean" - ~C-a~ takes you to the first character on the line.
+
+#+BEGIN_SRC emacs-lisp
+(use-package mwim
+  :config
+  (global-set-key (kbd "C-a") 'mwim-beginning)
+  (global-set-key (kbd "C-e") 'mwim-end))
+#+END_SRC
+
+**** ~rainbow-delimeters~
+
+#+BEGIN_SRC emacs-lisp
+(use-package rainbow-delimiters
+  :config
+  (add-hook 'prog-mode-hook #'rainbow-delimiters-mode))
+#+END_SRC
+
+**** ~reveal-in-osx-finder~
+
+#+BEGIN_SRC emacs-lisp
+(use-package reveal-in-osx-finder)
+#+END_SRC
+
+**** ~vundo~
+
+
+#+BEGIN_SRC emacs-lisp
+
+(use-package vundo
+  :commands (vundo)
+  :config
+  (setq vundo-compact-display t))
+#+END_SRC
+
+**** ~neotree~
+#+BEGIN_SRC emacs-lisp
+(use-package all-the-icons)
+(use-package neotree
+  :config
+  (setq neo-autorefresh t)
+  (setq neo-window-fixed-size nil)
+  (setq neo-reset-size-on-open nil)
+  (eval-after-load "neotree"
+    '(add-to-list 'window-size-change-functions
+                  (lambda (frame)
+                    (let ((neo-window (neo-global--get-window)))
+                      (unless (null neo-window)
+                        (setq neo-window-width (window-width neo-window)))))))
+  (setq neo-theme (if (display-graphic-p) 'icons 'arrow))
+  :bind
+  (:map global-map
+	("s-t"   . neotree-toggle)))
+#+END_SRC
+
+**** ~ws-butler~
+
+
+#+BEGIN_SRC emacs-lisp
+(use-package ws-butler
+  :delight
+  :config
+  (ws-butler-global-mode t))
+#+END_SRC
+
+**** ~wttrin~
+#+BEGIN_SRC emacs-lisp
+(use-package wttrin
+  :config
+  (setq wttrin-default-cities '("New York NY" "Winchester VA" "Durham NC" "Kaohsiung City")))
+#+END_SRC
+**** ~ztree~
+#+BEGIN_SRC emacs-lisp
+(use-package ztree)
+#+END_SRC
+
+**** ~yassnippet~
+#+BEGIN_SRC emacs-lisp
+(use-package yasnippet
+  :commands yas-minor-mode
+  :hook (go-mode . yas-minor-mode))
+#+END_SRC
+
+**** ~winum~
+#+BEGIN_SRC emacs-lisp
+(use-package winum
+  :config
+  (winum-mode)
+  :bind
+      (("M-0" . 'winum-select-window-0-or-10)
+       ("M-1" . 'winum-select-window-1)
+       ("M-2" . 'winum-select-window-2)
+       ("M-3" . 'winum-select-window-3)
+       ("M-4" . 'winum-select-window-4)
+       ("M-5" . 'winum-select-window-5)
+       ("M-6" . 'winum-select-window-6)
+       ("M-7" . 'winum-select-window-7)
+       ("M-8" . 'winum-select-window-8))
+  )
+#+END_SRC
+
+#+begin_src emacs-lisp
+(use-package pandoc-mode
+  :config
+  (add-hook 'markdown-mode-hook 'pandoc-mode))
+#+end_src
+
+**** ~hide-mode-line~
+#+begin_src emacs-lisp
+(use-package hide-mode-line)
+#+end_src
+
+
+#+BEGIN_SRC emacs-lisp
+(setq backup-directory-alist `(("." . "~/.emacs.bak")))
+
+(setenv "PINENTRY_USER_DATA" "USE_CURSES=0")
+#+END_SRC
+
+*** Set up the ~PATH~
+
+#+BEGIN_SRC emacs-lisp
+(use-package exec-path-from-shell
+  :config
+  (setq exec-path-from-shell-arguments '("-l"))
+  (setenv "SHELL" "/bin/zsh")
+  (exec-path-from-shell-initialize)
+  (exec-path-from-shell-copy-env "GOPATH")
+  (exec-path-from-shell-copy-env "PATH")
+  (exec-path-from-shell-copy-env "LC_ALL")
+  (exec-path-from-shell-copy-env "LANG")
+  (exec-path-from-shell-copy-env "LC_TYPE")
+  (exec-path-from-shell-copy-env "SSH_AGENT_PID")
+  (exec-path-from-shell-copy-env "SSH_AUTH_SOCK")
+  (exec-path-from-shell-copy-env "SHELL"))
+#+END_SRC
+
+*** Proving ground
+
+Trying to piece together a more modern completion system
+**** ~marginalia~ 
+#+begin_src emacs-lisp
+;; Enable rich annotations using the Marginalia package
+(use-package marginalia
+  ;; Bind `marginalia-cycle' locally in the minibuffer.  To make the binding
+  ;; available in the *Completions* buffer, add it to the
+  ;; `completion-list-mode-map'.
+  :bind (:map minibuffer-local-map
+         ("M-A" . marginalia-cycle))
+
+  ;; The :init section is always executed.
+  :init
+
+  ;; Marginalia must be activated in the :init section of use-package such that
+  ;; the mode gets enabled right away. Note that this forces loading the
+  ;; package.
+  (marginalia-mode))
+#+END_SRC
+
+#+begin_src emacs-lisp
+(use-package embark
+  :ensure t
+
+  :bind
+  (("C-." . embark-act)         ;; pick some comfortable binding
+   ("C-;" . embark-dwim)        ;; good alternative: M-.
+   ("C-h B" . embark-bindings)) ;; alternative for `describe-bindings'
+
+  :init
+
+  ;; Optionally replace the key help with a completing-read interface
+  (setq prefix-help-command #'embark-prefix-help-command)
+
+  ;; Show the Embark target at point via Eldoc. You may adjust the
+  ;; Eldoc strategy, if you want to see the documentation from
+  ;; multiple providers. Beware that using this can be a little
+  ;; jarring since the message shown in the minibuffer can be more
+  ;; than one line, causing the modeline to move up and down:
+
+  ;; (add-hook 'eldoc-documentation-functions #'embark-eldoc-first-target)
+  ;; (setq eldoc-documentation-strategy #'eldoc-documentation-compose-eagerly)
+
+  :config
+
+  ;; Hide the mode line of the Embark live/completions buffers
+  (add-to-list 'display-buffer-alist
+               '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
+                 nil
+                 (window-parameters (mode-line-format . none)))))
+#+end_src
+
+**** ~consult~
+#+BEGIN_SRC emacs-lisp
+;; Example configuration for Consult
+(use-package consult
+  ;; Replace bindings. Lazily loaded by `use-package'.
+  :bind (;; C-c bindings in `mode-specific-map'
+         ("C-c M-x" . consult-mode-command)
+         ("C-c h" . consult-history)
+         ("C-c k" . consult-kmacro)
+         ("C-c m" . consult-man)
+         ("C-c i" . consult-info)
+         ([remap Info-search] . consult-info)
+         ;; C-x bindings in `ctl-x-map'
+         ("C-x M-:" . consult-complex-command)     ;; orig. repeat-complex-command
+         ("C-x b" . consult-buffer)                ;; orig. switch-to-buffer
+         ("C-x 4 b" . consult-buffer-other-window) ;; orig. switch-to-buffer-other-window
+         ("C-x 5 b" . consult-buffer-other-frame)  ;; orig. switch-to-buffer-other-frame
+         ("C-x t b" . consult-buffer-other-tab)    ;; orig. switch-to-buffer-other-tab
+         ("C-x r b" . consult-bookmark)            ;; orig. bookmark-jump
+         ("C-x p b" . consult-project-buffer)      ;; orig. project-switch-to-buffer
+         ;; Custom M-# bindings for fast register access
+         ("M-#" . consult-register-load)
+         ("M-'" . consult-register-store)          ;; orig. abbrev-prefix-mark (unrelated)
+         ("C-M-#" . consult-register)
+         ;; Other custom bindings
+         ("M-y" . consult-yank-pop)                ;; orig. yank-pop
+         ;; M-g bindings in `goto-map'
+         ("M-g e" . consult-compile-error)
+         ("M-g f" . consult-flymake)               ;; Alternative: consult-flycheck
+         ("M-g g" . consult-goto-line)             ;; orig. goto-line
+         ("M-g M-g" . consult-goto-line)           ;; orig. goto-line
+         ("M-g o" . consult-outline)               ;; Alternative: consult-org-heading
+         ("M-g m" . consult-mark)
+         ("M-g k" . consult-global-mark)
+         ("M-g i" . consult-imenu)
+         ("M-g I" . consult-imenu-multi)
+         ;; M-s bindings in `search-map'
+         ("M-s d" . consult-find)                  ;; Alternative: consult-fd
+         ("M-s c" . consult-locate)
+         ("M-s g" . consult-grep)
+         ("M-s G" . consult-git-grep)
+         ("M-s r" . consult-ripgrep)
+         ("M-s l" . consult-line)
+         ("M-s L" . consult-line-multi)
+         ("M-s k" . consult-keep-lines)
+         ("M-s u" . consult-focus-lines)
+         ;; Isearch integration
+         ("M-s e" . consult-isearch-history)
+         :map isearch-mode-map
+         ("M-e" . consult-isearch-history)         ;; orig. isearch-edit-string
+         ("M-s e" . consult-isearch-history)       ;; orig. isearch-edit-string
+         ("M-s l" . consult-line)                  ;; needed by consult-line to detect isearch
+         ("M-s L" . consult-line-multi)            ;; needed by consult-line to detect isearch
+         ;; Minibuffer history
+         :map minibuffer-local-map
+         ("M-s" . consult-history)                 ;; orig. next-matching-history-element
+         ("M-r" . consult-history))                ;; orig. previous-matching-history-element
+
+  ;; Enable automatic preview at point in the *Completions* buffer. This is
+  ;; relevant when you use the default completion UI.
+  :hook (completion-list-mode . consult-preview-at-point-mode)
+
+  ;; The :init configuration is always executed (Not lazy)
+  :init
+
+  ;; Tweak the register preview for `consult-register-load',
+  ;; `consult-register-store' and the built-in commands.  This improves the
+  ;; register formatting, adds thin separator lines, register sorting and hides
+  ;; the window mode line.
+  (advice-add #'register-preview :override #'consult-register-window)
+  (setq register-preview-delay 0.5)
+
+  ;; Use Consult to select xref locations with preview
+  (setq xref-show-xrefs-function #'consult-xref
+        xref-show-definitions-function #'consult-xref)
+
+  ;; Configure other variables and modes in the :config section,
+  ;; after lazily loading the package.
+  :config
+
+  ;; Optionally configure preview. The default value
+  ;; is 'any, such that any key triggers the preview.
+  ;; (setq consult-preview-key 'any)
+  ;; (setq consult-preview-key "M-.")
+  ;; (setq consult-preview-key '("S-<down>" "S-<up>"))
+  ;; For some commands and buffer sources it is useful to configure the
+  ;; :preview-key on a per-command basis using the `consult-customize' macro.
+  (consult-customize
+   consult-theme :preview-key '(:debounce 0.2 any)
+   consult-ripgrep consult-git-grep consult-grep
+   consult-bookmark consult-recent-file consult-xref
+   consult--source-bookmark consult--source-file-register
+   consult--source-recent-file consult--source-project-recent-file
+   ;; :preview-key "M-."
+   :preview-key '(:debounce 0.4 any))
+
+  ;; Optionally configure the narrowing key.
+  ;; Both < and C-+ work reasonably well.
+  (setq consult-narrow-key "<") ;; "C-+"
+
+  ;; Optionally make narrowing help available in the minibuffer.
+  ;; You may want to use `embark-prefix-help-command' or which-key instead.
+  ;; (keymap-set consult-narrow-map (concat consult-narrow-key " ?") #'consult-narrow-help)
+)
+#+END_SRC
+
+*** ~embark~
+
+#+BEGIN_SRC emacs-lisp
+;; Pulls in embark as a dependency
+(use-package embark-consult
+  :ensure t ; only need to install it, embark loads it after consult if found
+  :hook
+  (embark-collect-mode . consult-preview-at-point-mode))
+#+END_SRC
+
+*** ~vertico~
+#+BEGIN_SRC emacs-lisp
+(use-package vertico
+  :custom
+  (vertico-resize t) ;; Grow and shrink the Vertico minibuffer
+  (vertico-cycle t) ;; Enable cycling for `vertico-next/previous'
+  :init
+  (vertico-mode))
+
+(use-package vertico-directory
+  :ensure f
+  :bind (:map vertico-map
+              ("C-l" . vertico-directory-up)
+              ("RET" . vertico-directory-enter)
+              ("DEL" . vertico-directory-delete-char)))
+#+END_SRC
+
+*** ~savehist~
+#+BEGIN_SRC emacs-lisp
+;; Persist history over Emacs restarts. Vertico sorts by history position.
+(use-package savehist
+  :init
+  (savehist-mode))
+#+END_SRC
+
+*** ~emacs~
+#+BEGIN_SRC emacs-lisp
+;; A few more useful configurations...
+(use-package emacs
+  :custom
+  ;; Support opening new minibuffers from inside existing minibuffers.
+  (enable-recursive-minibuffers t)
+  ;; Hide commands in M-x which do not work in the current mode.  Vertico
+  ;; commands are hidden in normal buffers. This setting is useful beyond
+  ;; Vertico.
+  (read-extended-command-predicate #'command-completion-default-include-p)
+  :init
+  ;; Add prompt indicator to `completing-read-multiple'.
+  ;; We display [CRM<separator>], e.g., [CRM,] if the separator is a comma.
+  (defun crm-indicator (args)
+    (cons (format "[CRM%s] %s"
+                  (replace-regexp-in-string
+                   "\\`\\[.*?]\\*\\|\\[.*?]\\*\\'" ""
+                   crm-separator)
+                  (car args))
+          (cdr args)))
+  (advice-add #'completing-read-multiple :filter-args #'crm-indicator)
+
+  ;; Do not allow the cursor in the minibuffer prompt
+  (setq minibuffer-prompt-properties
+        '(read-only t cursor-intangible t face minibuffer-prompt))
+  (add-hook 'minibuffer-setup-hook #'cursor-intangible-mode))
+#+END_SRC
+
+*** ~orderless~
+
+#+BEGIN_SRC emacs-lisp
+;; Optionally use the `orderless' completion style.
+(use-package orderless
+  :custom
+  ;; Configure a custom style dispatcher (see the Consult wiki)
+  ;; (orderless-style-dispatchers '(+orderless-consult-dispatch orderless-affix-dispatch))
+  ;; (orderless-component-separator #'orderless-escapable-split-on-space)
+  (completion-styles '(orderless ))
+  (completion-category-defaults nil)
+  (completion-category-overrides '((file (styles partial-completion)))))
+#+end_src
+
+*** ~wgrep~
+
+#+begin_src emacs-lisp
+(use-package wgrep)
+#+end_src

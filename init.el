@@ -1,8 +1,6 @@
-
-;; Added by Package.el.  This must come before configurations of
-;; installed packages.  Don't delete this line.  If you don't want it,
-;; just comment it out by adding a semicolon to the start of the line.
-;; You may delete these explanatory comments.
-(package-initialize)
-
-(org-babel-load-file "~/.emacs.d/config.org")
+;;; package --- Shane's Emacs Configuration
+;;; Commentary:
+;;; Not sure what more to say here.  Have a nice day.
+;;; Code:
+(org-babel-load-file "~/.emacs.d/readme.org")
+;;; init.el ends here
