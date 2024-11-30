@@ -560,7 +560,6 @@ https://www.emacswiki.org/emacs/WindMove
 (when (fboundp 'windmove-default-keybindings)
   (windmove-default-keybindings))
 #+END_SRC
-** Interface Customizations
 ** Misc
 
 #+BEGIN_SRC emacs-lisp
