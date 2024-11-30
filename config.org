@@ -1,5 +1,4 @@
 * My Emacs Configuration
-
 ** Server
 
 Open a frame after Emacs daemon starts. I currently only start Emacs
@@ -19,7 +18,6 @@ as a server from my MacBook under launchctl.
 ;; Run the function after the daemon starts
 (add-hook 'after-init-hook 'open-initial-frame-when-daemonized)
 #+end_src
-
 
 ** Package management
 
@@ -58,7 +56,6 @@ keyword repeatedly.
 (use-package delight)
 #+end_src
 
-
 ** LLM
 
 *** ~ellama~
@@ -73,7 +70,6 @@ keyword repeatedly.
 	       :chat-model "llama3.1"
 	       :embedding-model "llama3.1")))
 #+END_SRC
-
 
 ** Text and Programming Modes
 
@@ -201,7 +197,6 @@ keyword repeatedly.
 (use-package ob-mermaid)
 #+end_src
 
-
 ** Terminal Emulation
 
 *** ~vterm~
@@ -209,7 +204,6 @@ keyword repeatedly.
 #+begin_src emacs-lisp
 (use-package vterm)
 #+end_src
-
 
 ** Tabs and Spaces
 
@@ -219,7 +213,6 @@ keyword repeatedly.
   :mode "\\.sh\\'"
   :config (setq sh-indentation 4 sh-basic-offset 4))
 #+END_SRC
-
 
 ** Packages
 *** ~browse-at-remote~
@@ -509,7 +502,6 @@ Provides the helpful ~undo-tree-visualize~ function. https://www.emacswiki.org/e
        ("M-8" . 'winum-select-window-8))
   )
 #+END_SRC
-
 
 ** Interface Customizations
 *** Columns
