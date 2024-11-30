@@ -1,14 +1,12 @@
 * My Emacs Configuration
 
-** Package management
+** Server
 
-There have been several times when ~package-refresh-contents~ does not fix a
-"Bad Request" errror from the default mirrors. These seem to be more reliable:
+Open a frame after Emacs daemon starts. I currently only start Emacs
+as a server from my MacBook under launchctl.
 
-#+BEGIN_SRC emacs-lisp
-;; Function to open a frame after Emacs daemon starts
-(defun open-initial-frame ()
-  "Open a new frame on startup."
+#+begin_src emacs-lisp
+(defun open-initial-frame-when-daemonized ()
   (when (daemonp)
     (setq server-use-tcp t)
     (setq server-auth-key (getenv "EMACS_SERVER_AUTH_KEY"))
@@ -19,8 +17,15 @@ There have been several times when ~package-refresh-contents~ does not fix a
     (make-frame '((display . "mac"))))) ;; Adjust "mac" if needed, depending on your display configuration
 
 ;; Run the function after the daemon starts
-(add-hook 'after-init-hook 'open-initial-frame)
+(add-hook 'after-init-hook 'open-initial-frame-when-daemonized)
+#+end_src
 
+** Package management
+
+There have been several times when ~package-refresh-contents~ does not fix a
+"Bad Request" errror from the default mirrors. These seem to be more reliable:
+
+#+BEGIN_SRC emacs-lisp
 (require 'package)
 (setq package-enable-at-startup nil)
 (setq package-archives
@@ -69,8 +74,8 @@ keyword repeatedly.
 
 ** Text and Programming Modes
 
-
 *** ~python-mode~
+
 #+BEGIN_SRC emacs-lisp
 (setq python-shell-interpreter "/Users/shanemcd/.pyenv/shims/python"
       flycheck-python-pycompile-executable "/Users/shanemcd/.pyenv/shims/python"
@@ -80,6 +85,11 @@ keyword repeatedly.
 *** ~org-mode~
 
 #+BEGIN_SRC emacs-lisp
+(use-package org-bullets
+  :config
+  (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
+
+
 (use-package org
   :mode ("\\.org\\'" . org-mode)
   :bind (("C-c l" . org-store-link)
@@ -88,6 +98,11 @@ keyword repeatedly.
          ("C-c C-w" . org-refile))
   :config
   (require 'org-tempo)
+  (setq org-hide-emphasis-markers t)
+  (font-lock-add-keywords 'org-mode
+                          '(("^ *\\([-]\\) "
+                             (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) "•"))))))
+
   (setq org-directory "~/org")
   (setq org-agenda-files (directory-files-recursively "~/org/" "\\.org$"))
   (setq org-use-speed-commands t)
@@ -120,7 +135,6 @@ keyword repeatedly.
   )
 
 (use-package ox-gfm)
-
 #+END_SRC
 
 *** ~markdown-mode~
@@ -171,11 +185,11 @@ keyword repeatedly.
 #+BEGIN_SRC emacs-lisp
 (use-package dockerfile-mode)
 #+END_SRC
+
 *** ~ob-mermaid~
 #+begin_src emacs-lisp
 (use-package ob-mermaid)
 #+end_src
-
 
 ** Terminal Emulation
 
@@ -184,6 +198,7 @@ keyword repeatedly.
 #+begin_src emacs-lisp
 (use-package vterm)
 #+end_src
+
 ** Tabs and Spaces
 
 #+BEGIN_SRC emacs-lisp
