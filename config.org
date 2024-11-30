@@ -20,6 +20,7 @@ as a server from my MacBook under launchctl.
 (add-hook 'after-init-hook 'open-initial-frame-when-daemonized)
 #+end_src
 
+
 ** Package management
 
 There have been several times when ~package-refresh-contents~ does not fix a
@@ -57,6 +58,7 @@ keyword repeatedly.
 (use-package delight)
 #+end_src
 
+
 ** LLM
 
 *** ~ellama~
@@ -72,6 +74,7 @@ keyword repeatedly.
 	       :embedding-model "llama3.1")))
 #+END_SRC
 
+
 ** Text and Programming Modes
 
 *** ~python-mode~
@@ -81,15 +84,9 @@ keyword repeatedly.
       flycheck-python-pycompile-executable "/Users/shanemcd/.pyenv/shims/python"
       python-shell-exec-path "/Users/shanemcd/.pyenv/shims/python")
 #+END_SRC
-
 *** ~org-mode~
 
 #+BEGIN_SRC emacs-lisp
-(use-package org-bullets
-  :config
-  (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
-
-
 (use-package org
   :mode ("\\.org\\'" . org-mode)
   :bind (("C-c l" . org-store-link)
@@ -98,10 +95,11 @@ keyword repeatedly.
          ("C-c C-w" . org-refile))
   :config
   (require 'org-tempo)
-  (setq org-hide-emphasis-markers t)
-  (font-lock-add-keywords 'org-mode
-                          '(("^ *\\([-]\\) "
-                             (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) "•"))))))
+  ;;(setq org-ellipsis "▾"
+  ;;      org-hide-emphasis-markers t)
+  ;;(font-lock-add-keywords 'org-mode
+  ;;                        '(("^ *\\([-]\\) "
+  ;;                           (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) "•"))))))
 
   (setq org-directory "~/org")
   (setq org-agenda-files (directory-files-recursively "~/org/" "\\.org$"))
@@ -125,14 +123,26 @@ keyword repeatedly.
      (mermaid . t)
      (python     . t)))
   (setq org-babel-python-command "python3")
-  (setq org-startup-folded nil)
+  (setq org-startup-folded t)
   (setq org-odt-preferred-output-format "docx")
   (setq org-src-fontify-natively t
         org-src-window-setup 'current-window
         org-src-strip-leading-and-trailing-blank-lines t
         org-src-preserve-indentation t
-        org-src-tab-acts-natively t)
-  )
+        org-src-tab-acts-natively t))
+
+(use-package org-bullets
+  :after org
+  :hook (org-mode . org-bullets-mode)
+  :custom
+  (org-bullets-bullet-list '("◉" "○" "●" "○" "●" "○" "●")))
+
+(use-package org-modern
+  :hook (org-mode . global-org-modern-mode))
+
+(use-package org-appear
+  :init
+  (add-hook 'org-mode-hook 'org-appear-mode))
 
 (use-package ox-gfm)
 #+END_SRC
@@ -191,6 +201,7 @@ keyword repeatedly.
 (use-package ob-mermaid)
 #+end_src
 
+
 ** Terminal Emulation
 
 *** ~vterm~
@@ -198,6 +209,7 @@ keyword repeatedly.
 #+begin_src emacs-lisp
 (use-package vterm)
 #+end_src
+
 
 ** Tabs and Spaces
 
@@ -207,6 +219,7 @@ keyword repeatedly.
   :mode "\\.sh\\'"
   :config (setq sh-indentation 4 sh-basic-offset 4))
 #+END_SRC
+
 
 ** Packages
 *** ~browse-at-remote~
@@ -497,6 +510,7 @@ Provides the helpful ~undo-tree-visualize~ function. https://www.emacswiki.org/e
   )
 #+END_SRC
 
+
 ** Interface Customizations
 *** Columns
 
@@ -556,10 +570,12 @@ https://github.com/mozilla/Fira
 
 *** Wind Move
 https://www.emacswiki.org/emacs/WindMove
+
 #+BEGIN_SRC emacs-lisp
 (when (fboundp 'windmove-default-keybindings)
   (windmove-default-keybindings))
 #+END_SRC
+
 ** Misc
 
 #+BEGIN_SRC emacs-lisp
