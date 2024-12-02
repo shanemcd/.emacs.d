@@ -5,4 +5,6 @@
 ;; You may delete these explanatory comments.
 (package-initialize)
 
+(setq custom-file "~/.emacs.d/generated.el")
+
 (org-babel-load-file "~/.emacs.d/config.org")

@@ -607,13 +607,6 @@ Ensure that the proper shell is used on macOS. For me, this was the solution to:
   (exec-path-from-shell-copy-env "SHELL"))
 #+END_SRC
 
-*** Store generated lisp in separate file
-
-#+BEGIN_SRC emacs-lisp
-(setq custom-file "~/.emacs.d/generated.el")
-#+END_SRC
-
-
 *** macOS Keybindings
 #+begin_src emacs-lisp
 (global-set-key [(super a)] 'mark-whole-buffer)
