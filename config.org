@@ -19,60 +19,20 @@ as a server from my MacBook under launchctl.
 (add-hook 'after-init-hook 'open-initial-frame-when-daemonized)
 #+end_src
 
-** Package management
-
-There have been several times when ~package-refresh-contents~ does not fix a
-"Bad Request" errror from the default mirrors. These seem to be more reliable:
-
-#+BEGIN_SRC emacs-lisp
-(require 'package)
-(setq package-enable-at-startup nil)
-(setq package-archives
-      '(("melpa" . "https://raw.githubusercontent.com/d12frosted/elpa-mirror/master/melpa/")
-        ("org"   . "https://raw.githubusercontent.com/d12frosted/elpa-mirror/master/org/")
-        ("gnu"   . "https://raw.githubusercontent.com/d12frosted/elpa-mirror/master/gnu/")))
-#+END_SRC
-
-*** Bootstrap and configure ~use-package~
-
-I use [[https://github.com/jwiegley/use-package][use-package]] to manage my
-configuration. Here I bootstrap + enable ~use-package-always-ensure~, which will
-always try to install packages in this file without having to use the ~:ensure~
-keyword repeatedly.
-
-#+BEGIN_SRC emacs-lisp
-(unless (package-installed-p 'use-package)
-  (package-refresh-contents)
-  (package-install 'use-package))
-
-(eval-when-compile
-  (require 'use-package))
-
-(require 'use-package-ensure)
-(setq use-package-always-ensure t)
-#+END_SRC
-
-#+begin_src emacs-lisp 
+#+begin_src emacs-lisp
 (use-package delight)
 #+end_src
 
-** LLM
-
-*** ~ellama~
+** Tabs and Spaces
 
 #+BEGIN_SRC emacs-lisp
-(use-package ellama
-  :bind ("C-c e" . ellama-transient-main-menu)
-  :init
-  (require 'llm-ollama)
-  (setopt ellama-provider
-	      (make-llm-ollama
-	       :chat-model "llama3.1"
-	       :embedding-model "llama3.1")))
+(setq-default indent-tabs-mode nil tab-width 4)
+(use-package sh-script
+  :mode "\\.sh\\'"
+  :config (setq sh-indentation 4 sh-basic-offset 4))
 #+END_SRC
 
 ** Text and Programming Modes
-
 *** ~python-mode~
 
 #+BEGIN_SRC emacs-lisp
@@ -80,6 +40,63 @@ keyword repeatedly.
       flycheck-python-pycompile-executable "/Users/shanemcd/.pyenv/shims/python"
       python-shell-exec-path "/Users/shanemcd/.pyenv/shims/python")
 #+END_SRC
+
+*** ~markdown-mode~
+#+BEGIN_SRC emacs-lisp
+(use-package markdown-mode
+  :config
+  (setq markdown-fontify-code-blocks-natively t))
+#+END_SRC
+
+*** ~show-paren-mode~
+#+BEGIN_SRC emacs-lisp
+(show-paren-mode)
+#+END_SRC
+
+*** ~yaml-mode~
+
+#+BEGIN_SRC emacs-lisp
+(use-package yaml-mode
+  :config
+  (setq yaml-indent-offset 2))
+#+END_SRC
+
+*** ~groovy-mode~
+#+BEGIN_SRC emacs-lisp
+(use-package groovy-mode
+  :config
+  (setq groovy-indent-offset 2))
+#+END_SRC
+
+*** ~swift~
+#+BEGIN_SRC emacs-lisp
+(use-package swift-mode)
+(use-package ob-swift)
+#+END_SRC
+
+*** ~go~
+#+BEGIN_SRC emacs-lisp
+(use-package go-mode
+  :config
+  (add-hook 'go-mode-hook
+            (lambda ()
+              (setq indent-tabs-mode 1)
+              (setq tab-width 8))))
+(use-package ob-go)
+#+END_SRC
+
+*** ~dockerfile-mode~
+#+BEGIN_SRC emacs-lisp
+(use-package dockerfile-mode)
+#+END_SRC
+
+*** ~ob-mermaid~
+#+begin_src emacs-lisp
+(use-package ob-mermaid)
+#+end_src
+
+** Org Mode
+
 *** ~org-mode~
 
 #+BEGIN_SRC emacs-lisp
@@ -142,61 +159,6 @@ keyword repeatedly.
 
 (use-package ox-gfm)
 #+END_SRC
-
-*** ~markdown-mode~
-#+BEGIN_SRC emacs-lisp
-(use-package markdown-mode
-  :config
-  (setq markdown-fontify-code-blocks-natively t))
-#+END_SRC
-
-*** ~show-paren-mode~
-#+BEGIN_SRC emacs-lisp
-(show-paren-mode)
-#+END_SRC
-
-*** ~yaml-mode~
-
-#+BEGIN_SRC emacs-lisp
-(use-package yaml-mode
-  :config
-  (setq yaml-indent-offset 2))
-#+END_SRC
-
-*** ~groovy-mode~
-#+BEGIN_SRC emacs-lisp
-(use-package groovy-mode
-  :config
-  (setq groovy-indent-offset 2))
-#+END_SRC
-
-*** ~swift~
-#+BEGIN_SRC emacs-lisp
-(use-package swift-mode)
-(use-package ob-swift)
-#+END_SRC
-
-*** ~go~
-#+BEGIN_SRC emacs-lisp
-(use-package go-mode
-  :config
-  (add-hook 'go-mode-hook
-            (lambda ()
-              (setq indent-tabs-mode 1)
-              (setq tab-width 8))))
-(use-package ob-go)
-#+END_SRC
-
-*** ~dockerfile-mode~
-#+BEGIN_SRC emacs-lisp
-(use-package dockerfile-mode)
-#+END_SRC
-
-*** ~ob-mermaid~
-#+begin_src emacs-lisp
-(use-package ob-mermaid)
-#+end_src
-
 ** Terminal Emulation
 
 *** ~vterm~
@@ -205,16 +167,74 @@ keyword repeatedly.
 (use-package vterm)
 #+end_src
 
-** Tabs and Spaces
+** Interface Customizations
+*** Columns
 
 #+BEGIN_SRC emacs-lisp
-(setq-default indent-tabs-mode nil tab-width 4)
-(use-package sh-script
-  :mode "\\.sh\\'"
-  :config (setq sh-indentation 4 sh-basic-offset 4))
+(add-hook 'markdown-mode-hook 'auto-fill-mode)
+
+(setq-default fill-column 80)
 #+END_SRC
 
-** Packages
+*** Disable Native UI Controls
+
+#+BEGIN_SRC emacs-lisp
+(tool-bar-mode -1)
+(menu-bar-mode -1)
+(scroll-bar-mode -1)
+#+END_SRC
+
+*** Font
+
+https://github.com/mozilla/Fira
+
+#+BEGIN_SRC emacs-lisp
+(add-to-list 'default-frame-alist '(font . "Fira Code"))
+#+END_SRC
+
+*** Hide Splash Screen
+
+#+BEGIN_SRC emacs-lisp
+(setq inhibit-splash-screen t)
+#+END_SRC
+
+*** Show column number in modeline
+
+#+BEGIN_SRC emacs-lisp
+(setq column-number-mode t)
+#+END_SRC
+
+*** Show Line Numbers
+
+#+BEGIN_SRC emacs-lisp
+(global-display-line-numbers-mode)
+#+END_SRC
+
+*** Start w/ Maximized Window
+
+#+BEGIN_SRC emacs-lisp
+(add-to-list 'default-frame-alist '(fullscreen . maximized))
+#+END_SRC
+
+*** Theme
+
+#+BEGIN_SRC emacs-lisp
+(use-package base16-theme
+  :config
+  (load-theme 'base16-tomorrow-night-eighties t))
+#+END_SRC
+
+*** Wind Move
+https://www.emacswiki.org/emacs/WindMove
+
+#+BEGIN_SRC emacs-lisp
+(when (fboundp 'windmove-default-keybindings)
+  (windmove-default-keybindings))
+#+END_SRC
+
+** LLM
+
+** Misc Packages
 *** ~browse-at-remote~
 #+BEGIN_SRC emacs-lisp
 (use-package browse-at-remote
@@ -324,6 +344,8 @@ I unbind ~flyspell-mode-map~ because I use ~C-.~ for ~imenu-list~.
   (setq helm-completion-in-region-fuzzy-match t)
   (setq helm-move-to-line-cycle-in-source nil)
   )
+
+(use-package helm-themes)
 #+END_SRC
 
 **** ~helm-ag~
@@ -502,71 +524,6 @@ I unbind ~flyspell-mode-map~ because I use ~C-.~ for ~imenu-list~.
        ("M-7" . 'winum-select-window-7)
        ("M-8" . 'winum-select-window-8))
   )
-#+END_SRC
-
-** Interface Customizations
-*** Columns
-
-#+BEGIN_SRC emacs-lisp
-(add-hook 'markdown-mode-hook 'auto-fill-mode)
-
-(setq-default fill-column 80)
-#+END_SRC
-
-*** Disable Native UI Controls
-
-#+BEGIN_SRC emacs-lisp
-(tool-bar-mode -1)
-(menu-bar-mode -1)
-(scroll-bar-mode -1)
-#+END_SRC
-
-*** Font
-
-https://github.com/mozilla/Fira
-
-#+BEGIN_SRC emacs-lisp
-(add-to-list 'default-frame-alist '(font . "Fira Code"))
-#+END_SRC
-
-*** Hide Splash Screen
-
-#+BEGIN_SRC emacs-lisp
-(setq inhibit-splash-screen t)
-#+END_SRC
-
-*** Show column number in modeline
-
-#+BEGIN_SRC emacs-lisp
-(setq column-number-mode t)
-#+END_SRC
-
-*** Show Line Numbers
-
-#+BEGIN_SRC emacs-lisp
-(global-display-line-numbers-mode)
-#+END_SRC
-
-*** Start w/ Maximized Window
-
-#+BEGIN_SRC emacs-lisp
-(add-to-list 'default-frame-alist '(fullscreen . maximized))
-#+END_SRC
-
-*** Theme
-
-#+BEGIN_SRC emacs-lisp
-(use-package base16-theme
-  :config
-  (load-theme 'base16-material t))
-#+END_SRC
-
-*** Wind Move
-https://www.emacswiki.org/emacs/WindMove
-
-#+BEGIN_SRC emacs-lisp
-(when (fboundp 'windmove-default-keybindings)
-  (windmove-default-keybindings))
 #+END_SRC
 
 ** Misc

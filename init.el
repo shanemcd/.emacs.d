@@ -1,10 +1,31 @@
+;;; package --- Shane's Emacs Config
+;;; Commentary:
+;;; Not sure what to say here
+;;; Code:
 
-;; Added by Package.el.  This must come before configurations of
-;; installed packages.  Don't delete this line.  If you don't want it,
-;; just comment it out by adding a semicolon to the start of the line.
-;; You may delete these explanatory comments.
-(package-initialize)
+(require 'package)
 
+(add-to-list 'package-archives
+    '("MELPA" .
+      "http://melpa.org/packages/"))
+
+(setq package-enable-at-startup nil)
+
+;; Bootstrap use-package
+(unless (package-installed-p 'use-package)
+  (package-refresh-contents)
+  (package-install 'use-package))
+
+(eval-when-compile
+  (require 'use-package))
+
+(require 'use-package-ensure)
+(setq use-package-always-ensure t)
+
+;; Evaluating the file below will result in some variables being set.
+;; Instead of cluttering up this file, create a new file that can be ignored.
 (setq custom-file "~/.emacs.d/generated.el")
 
+;; Load the rest of the configuration using babel
 (org-babel-load-file "~/.emacs.d/config.org")
+;;; init.el ends here
