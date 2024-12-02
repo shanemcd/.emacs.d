@@ -419,14 +419,15 @@ I unbind ~flyspell-mode-map~ because I use ~C-.~ for ~imenu-list~.
 (use-package reveal-in-osx-finder)
 #+END_SRC
 
-*** ~undo-tree~
+*** ~vundo~
 
-Provides the helpful ~undo-tree-visualize~ function. https://www.emacswiki.org/emacs/UndoTree
 
 #+BEGIN_SRC emacs-lisp
-(use-package undo-tree
-  :init
-  (undo-tree-mode))
+
+(use-package vundo
+  :commands (vundo)
+  :config
+  (setq vundo-compact-display t))
 #+END_SRC
 
 *** ~neotree~
