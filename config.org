@@ -1,8 +1,59 @@
 * My Emacs Configuration
+** Bootstrap
+
+Putting stuff here that might bite me if they aren't loaded early.
+
+*** ~delight~
+
+https://elpa.gnu.org/packages/delight.html
+
+#+begin_src emacs-lisp
+(use-package delight)
+#+end_src
+
 ** Server
 
-Open a frame after Emacs daemon starts. I currently only start Emacs
-as a server from my MacBook under launchctl.
+This opens a frame after Emacs daemon starts. Why? Well. It's a long story, and
+the only reason I am memoralizing it here is so that I have a chance of
+remembering what I was thinking if I ever have to explain this to anyone.
+
+My workflow is built around the assumption that the code I am working on may or
+may not be local to the machine I am working on. For cases where I need to work
+remotely, I use [[https:www.gnu.org/software/tramp/][tramp]]. This mostly works fine. However, there are times where I
+am SSH'd into the machine where most of my code is hosted via a terminal and I
+would like a way to open a file or directory in Emacs without having to copy /
+paste a path between the applications. By starting starting the server below
+listening via TCP, I was able to open reverse emacsclient connections back to my
+MacBook using this cobbled together function:
+
+#+begin_src bash
+function re {
+    # Get the number of arguments
+    local num_args=$#
+
+    # If no arguments are provided, exit the function
+    if [ $num_args -eq 0 ]; then
+        echo "🤖 re (remote? reverse? emacsclient) 🤖"
+        echo "Usage: re [emacsclient options] <path>"
+        return 1
+    fi
+
+    # Extract the last argument as the path
+    local tramppath="$1"
+
+    # Check if a valid path was provided (should be the first arg)
+    if [ -z "$tramppath" ]; then
+        echo "Error: No path provided."
+        return 1
+    fi
+
+    # Run the emacsclient command with -cn option and --server-file and /sshx options
+    emacsclient -cn --server-file ~/server /sshx:$(hostname):$tramppath
+}
+#+end_src
+
+This takes the local path I'm trying to open and passes a "tramp path" back to
+the emacs server running on my laptop:
 
 #+begin_src emacs-lisp
 (defun open-initial-frame-when-daemonized ()
@@ -19,9 +70,9 @@ as a server from my MacBook under launchctl.
 (add-hook 'after-init-hook 'open-initial-frame-when-daemonized)
 #+end_src
 
-#+begin_src emacs-lisp
-(use-package delight)
-#+end_src
+I set ~EMACS_SERVER_AUTH_KEY~ and launch emacs via ~launchctl~. Since I
+currently only run emacs as a daemon on macOS I do not have any conditional
+logic here.
 
 ** Tabs and Spaces
 
@@ -43,12 +94,14 @@ as a server from my MacBook under launchctl.
 
 *** ~markdown-mode~
 #+BEGIN_SRC emacs-lisp
+
 (use-package markdown-mode
   :config
   (setq markdown-fontify-code-blocks-natively t))
 #+END_SRC
 
 *** ~show-paren-mode~
+
 #+BEGIN_SRC emacs-lisp
 (show-paren-mode)
 #+END_SRC
@@ -62,6 +115,7 @@ as a server from my MacBook under launchctl.
 #+END_SRC
 
 *** ~groovy-mode~
+
 #+BEGIN_SRC emacs-lisp
 (use-package groovy-mode
   :config
@@ -69,13 +123,16 @@ as a server from my MacBook under launchctl.
 #+END_SRC
 
 *** ~swift~
+
 #+BEGIN_SRC emacs-lisp
 (use-package swift-mode)
 (use-package ob-swift)
 #+END_SRC
 
 *** ~go~
+
 #+BEGIN_SRC emacs-lisp
+
 (use-package go-mode
   :config
   (add-hook 'go-mode-hook
@@ -86,11 +143,13 @@ as a server from my MacBook under launchctl.
 #+END_SRC
 
 *** ~dockerfile-mode~
+
 #+BEGIN_SRC emacs-lisp
 (use-package dockerfile-mode)
 #+END_SRC
 
 *** ~ob-mermaid~
+
 #+begin_src emacs-lisp
 (use-package ob-mermaid)
 #+end_src
@@ -108,12 +167,6 @@ as a server from my MacBook under launchctl.
          ("C-c C-w" . org-refile))
   :config
   (require 'org-tempo)
-  ;;(setq org-ellipsis "▾"
-  ;;      org-hide-emphasis-markers t)
-  ;;(font-lock-add-keywords 'org-mode
-  ;;                        '(("^ *\\([-]\\) "
-  ;;                           (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) "•"))))))
-
   (setq org-directory "~/org")
   (setq org-agenda-files (directory-files-recursively "~/org/" "\\.org$"))
   (setq org-use-speed-commands t)
@@ -143,12 +196,6 @@ as a server from my MacBook under launchctl.
         org-src-strip-leading-and-trailing-blank-lines t
         org-src-preserve-indentation t
         org-src-tab-acts-natively t))
-
-(use-package org-bullets
-  :after org
-  :hook (org-mode . org-bullets-mode)
-  :custom
-  (org-bullets-bullet-list '("◉" "○" "●" "○" "●" "○" "●")))
 
 (use-package org-modern
   :hook (org-mode . global-org-modern-mode))
@@ -233,6 +280,19 @@ https://www.emacswiki.org/emacs/WindMove
 #+END_SRC
 
 ** LLM
+
+*** ~elama~
+
+#+begin_src emacs-lisp
+(use-package ellama
+  :bind ("C-c e" . ellama-transient-main-menu)
+  :init
+  (require 'llm-ollama)
+  (setopt ellama-provider
+	  (make-llm-ollama
+	   :chat-model "llama3.1"
+	   :embedding-model "llama3.1")))
+#+end_src
 
 ** Misc Packages
 *** ~browse-at-remote~
