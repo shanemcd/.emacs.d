@@ -586,6 +586,12 @@ I unbind ~flyspell-mode-map~ because I use ~C-.~ for ~imenu-list~.
   )
 #+END_SRC
 
+#+begin_src emacs-lisp
+(use-package pandoc-mode
+  :config
+  (add-hook 'markdown-mode-hook 'pandoc-mode))
+#+end_src
+
 ** Misc
 
 #+BEGIN_SRC emacs-lisp
