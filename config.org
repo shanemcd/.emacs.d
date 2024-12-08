@@ -279,6 +279,26 @@ https://www.emacswiki.org/emacs/WindMove
   (windmove-default-keybindings))
 #+END_SRC
 
+
+*** Enable clicking in the fringe to toggle bookmarks
+#+begin_src emacs-lisp
+(defun my-toggle-emacs-bookmark (event)
+  "Toggle an Emacs bookmark at the line clicked."
+  (interactive "e")
+  (let* ((pos (posn-point (event-start event)))
+         (line (line-number-at-pos pos))
+         (bookmark-name (format "Line %d in %s" line (buffer-name))))
+    (save-excursion
+      (goto-char pos)
+      (if (bookmark-get-bookmark bookmark-name t)
+          (progn
+            (bookmark-delete bookmark-name)
+            (message "Deleted bookmark: %s" bookmark-name))
+        (bookmark-set bookmark-name)
+        (message "Set bookmark: %s" bookmark-name)))))
+
+(global-set-key [left-fringe mouse-1] #'my-toggle-emacs-bookmark)
+#+end_src
 ** LLM
 
 *** ~ellama~
