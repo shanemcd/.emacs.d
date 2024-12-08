@@ -281,7 +281,7 @@ https://www.emacswiki.org/emacs/WindMove
 
 ** LLM
 
-*** ~elama~
+*** ~ellama~
 
 #+begin_src emacs-lisp
 (use-package ellama
@@ -290,8 +290,8 @@ https://www.emacswiki.org/emacs/WindMove
   (require 'llm-ollama)
   (setopt ellama-provider
 	  (make-llm-ollama
-	   :chat-model "llama3.1"
-	   :embedding-model "llama3.1")))
+	   :chat-model "gemma2:9b"
+	   :embedding-model "gemma2:9b")))
 #+end_src
 
 ** Misc Packages
