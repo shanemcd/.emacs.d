@@ -626,7 +626,7 @@ I unbind ~flyspell-mode-map~ because I use ~C-.~ for ~imenu-list~.
 #+BEGIN_SRC emacs-lisp
 (setq require-final-newline t)
 #+END_SRC
-*** Set up ~PATH~ on macOS
+*** Set up ~PATH~
 
 Ensure that the proper shell is used on macOS. For me, this was the solution to:
 
