@@ -204,8 +204,17 @@ logic here.
   :init
   (add-hook 'org-mode-hook 'org-appear-mode))
 
-(use-package ox-gfm)
+(use-package org-roam)
 #+END_SRC
+
+*** ~ox-gfm~
+
+https://github.com/larstvei/ox-gfm
+
+#+begin_src emacs-lisp
+(use-package ox-gfm)
+#+end_src
+
 ** Terminal Emulation
 
 *** ~vterm~
