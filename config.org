@@ -204,7 +204,16 @@ logic here.
   :init
   (add-hook 'org-mode-hook 'org-appear-mode))
 
-(use-package org-roam)
+(use-package org-roam
+  :config
+  (setq org-roam-directory (file-truename "~/org/roam"))
+  (org-roam-db-autosync-mode)
+  (setq org-roam-node-display-template "${title:*} ${tags:20}")
+  (add-to-list 'helm-completing-read-handlers-alist
+               '(org-roam-node-find . helm-completing-read-sync-default-handler))
+
+  :bind (("C-c r b" . org-roam-buffer-toggle)
+         ("C-c r f" . org-roam-node-find)))
 #+END_SRC
 
 *** ~ox-gfm~
@@ -435,6 +444,8 @@ I unbind ~flyspell-mode-map~ because I use ~C-.~ for ~imenu-list~.
   )
 
 (use-package helm-themes)
+
+(use-package helm-org)
 #+END_SRC
 
 **** ~helm-ag~
