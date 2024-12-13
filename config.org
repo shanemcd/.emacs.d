@@ -209,8 +209,8 @@ logic here.
   (setq org-roam-directory (file-truename "~/org/roam"))
   (org-roam-db-autosync-mode)
   (setq org-roam-node-display-template "${title:*} ${tags:20}")
-  (add-to-list 'helm-completing-read-handlers-alist
-               '(org-roam-node-find . helm-completing-read-sync-default-handler))
+  ;; (add-to-list 'helm-completing-read-handlers-alist
+  ;;              '(org-roam-node-find . helm-completing-read-sync-default-handler))
 
   :bind (("C-c r b" . org-roam-buffer-toggle)
          ("C-c r f" . org-roam-node-find)))
@@ -390,7 +390,7 @@ https://www.emacswiki.org/emacs/WindMove
 #+BEGIN_SRC emacs-lisp
 (use-package dumb-jump
   :config
-  (setq dumb-jump-selector 'helm)
+  ;(setq dumb-jump-selector 'helm)
   (add-hook 'xref-backend-functions #'dumb-jump-xref-activate))
 #+END_SRC
 *** ~fill-column-indicator~
@@ -425,37 +425,37 @@ I unbind ~flyspell-mode-map~ because I use ~C-.~ for ~imenu-list~.
 *** ~helm~
 
 #+BEGIN_SRC emacs-lisp
-(use-package helm
-  :delight
-  :config
-  (helm-mode t)
+;; (use-package helm
+;;   :delight
+;;   :config
+;;   (helm-mode t)
 
-  (global-set-key (kbd "M-x") 'helm-M-x)
-  (global-set-key (kbd "C-c f r") 'helm-recentf)
-  (global-set-key (kbd "C-x C-f") 'helm-find-files)
-  (define-key helm-map (kbd "<tab>") 'helm-execute-persistent-action)
-  (define-key helm-map (kbd "C-i") 'helm-execute-persistent-action)
-  (define-key helm-map (kbd "C-z")  'helm-select-action)
+;;   (global-set-key (kbd "M-x") 'helm-M-x)
+;;   (global-set-key (kbd "C-c f r") 'helm-recentf)
+;;   (global-set-key (kbd "C-x C-f") 'helm-find-files)
+;;   (define-key helm-map (kbd "<tab>") 'helm-execute-persistent-action)
+;;   (define-key helm-map (kbd "C-i") 'helm-execute-persistent-action)
+;;   (define-key helm-map (kbd "C-z")  'helm-select-action)
 
-  (setq helm-ff-auto-update-initial-value nil)
-  (setq helm-mode-fuzzy-match t)
-  (setq helm-completion-in-region-fuzzy-match t)
-  (setq helm-move-to-line-cycle-in-source nil)
-  )
+;;   (setq helm-ff-auto-update-initial-value nil)
+;;   (setq helm-mode-fuzzy-match t)
+;;   (setq helm-completion-in-region-fuzzy-match t)
+;;   (setq helm-move-to-line-cycle-in-source nil)
+;;   )
 
-(use-package helm-themes)
+;; (use-package helm-themes)
 
-(use-package helm-org)
+;; (use-package helm-org)
 #+END_SRC
 
 **** ~helm-ag~
 
 #+BEGIN_SRC emacs-lisp
-(use-package helm-ag
-  :bind ("C-c p" . helm-projectile-ag)
-  :commands (helm-ag helm-projectile-ag)
-  :init (setq helm-ag-insert-at-point 'symbol
-	      helm-ag-command-option "--path-to-ignore ~/.agignore"))
+;; (use-package helm-ag
+;;   :bind ("C-c p" . helm-projectile-ag)
+;;   :commands (helm-ag helm-projectile-ag)
+;;   :init (setq helm-ag-insert-at-point 'symbol
+;; 	      helm-ag-command-option "--path-to-ignore ~/.agignore"))
 #+END_SRC
 
 *** ~htmlize~
@@ -491,9 +491,7 @@ I unbind ~flyspell-mode-map~ because I use ~C-.~ for ~imenu-list~.
 #+BEGIN_SRC emacs-lisp
 (use-package magit
   :bind
-  (("C-x g" . magit-status))
-  :config
-  (setq magit-display-buffer-function #'magit-display-buffer-fullframe-status-v1))
+  (("C-x g" . magit)))
 #+END_SRC
 
 *** ~mwim~
@@ -513,18 +511,19 @@ I unbind ~flyspell-mode-map~ because I use ~C-.~ for ~imenu-list~.
 (use-package projectile
   :commands (projectile-find-file projectile-switch-project)
   :diminish projectile-mode
-  :init
-  (use-package helm-projectile
-    :bind
-    (("M-t" . helm-projectile-find-file)
-     ("s-p" . helm-projectile-find-file)
-     ("s-P" . helm-projectile-switch-project)))
+  ;; :init
+  ;; (use-package helm-projectile
+  ;;   :bind
+  ;;   (("M-t" . helm-projectile-find-file)
+  ;;    ("s-p" . helm-projectile-find-file)
+  ;;   ("s-P" . helm-projectile-switch-project)))
   :config
   (setq projectile-switch-project-action #'projectile-commander)
   (add-to-list 'projectile-globally-ignored-directories "*node_modules")
   (add-to-list 'projectile-globally-ignored-directories "*.tox")
   (projectile-global-mode)
-  (helm-projectile-on))
+  ;; (helm-projectile-on)
+)
 #+END_SRC
 
 *** ~rainbow-delimeters~
@@ -570,15 +569,6 @@ I unbind ~flyspell-mode-map~ because I use ~C-.~ for ~imenu-list~.
   :bind
   (:map global-map
 	("s-t"   . neotree-toggle)))
-#+END_SRC
-
-*** ~which-key~
-
-#+BEGIN_SRC emacs-lisp
-(use-package which-key
-  :config
-  (which-key-mode)
-  (which-key-setup-minibuffer))
 #+END_SRC
 
 *** ~ws-butler~
@@ -685,4 +675,109 @@ Ensure that the proper shell is used on macOS. For me, this was the solution to:
 
 (setq mac-option-modifier 'super)
 (setq mac-command-modifier 'meta)
+#+end_src
+
+#+begin_src emacs-lisp
+;; Enable rich annotations using the Marginalia package
+(use-package marginalia
+  ;; Bind `marginalia-cycle' locally in the minibuffer.  To make the binding
+  ;; available in the *Completions* buffer, add it to the
+  ;; `completion-list-mode-map'.
+  :bind (:map minibuffer-local-map
+         ("M-A" . marginalia-cycle))
+
+  ;; The :init section is always executed.
+  :init
+
+  ;; Marginalia must be activated in the :init section of use-package such that
+  ;; the mode gets enabled right away. Note that this forces loading the
+  ;; package.
+  (marginalia-mode))
+
+(use-package embark
+  :ensure t
+
+  :bind
+  (("C-." . embark-act)         ;; pick some comfortable binding
+   ("C-;" . embark-dwim)        ;; good alternative: M-.
+   ("C-h B" . embark-bindings)) ;; alternative for `describe-bindings'
+
+  :init
+
+  ;; Optionally replace the key help with a completing-read interface
+  (setq prefix-help-command #'embark-prefix-help-command)
+
+  ;; Show the Embark target at point via Eldoc. You may adjust the
+  ;; Eldoc strategy, if you want to see the documentation from
+  ;; multiple providers. Beware that using this can be a little
+  ;; jarring since the message shown in the minibuffer can be more
+  ;; than one line, causing the modeline to move up and down:
+
+  ;; (add-hook 'eldoc-documentation-functions #'embark-eldoc-first-target)
+  ;; (setq eldoc-documentation-strategy #'eldoc-documentation-compose-eagerly)
+
+  :config
+
+  ;; Hide the mode line of the Embark live/completions buffers
+  (add-to-list 'display-buffer-alist
+               '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
+                 nil
+                 (window-parameters (mode-line-format . none)))))
+
+;; Consult users will also want the embark-consult package.
+(use-package embark-consult
+  :ensure t ; only need to install it, embark loads it after consult if found
+  :hook
+  (embark-collect-mode . consult-preview-at-point-mode))
+
+;; Enable vertico
+(use-package vertico
+  :custom
+  ;; (vertico-scroll-margin 0) ;; Different scroll margin
+  ;; (vertico-count 20) ;; Show more candidates
+  (vertico-resize t) ;; Grow and shrink the Vertico minibuffer
+  (vertico-cycle t) ;; Enable cycling for `vertico-next/previous'
+  :init
+  (vertico-mode))
+
+;; Persist history over Emacs restarts. Vertico sorts by history position.
+(use-package savehist
+  :init
+  (savehist-mode))
+
+;; A few more useful configurations...
+(use-package emacs
+  :custom
+  ;; Support opening new minibuffers from inside existing minibuffers.
+  (enable-recursive-minibuffers t)
+  ;; Hide commands in M-x which do not work in the current mode.  Vertico
+  ;; commands are hidden in normal buffers. This setting is useful beyond
+  ;; Vertico.
+  (read-extended-command-predicate #'command-completion-default-include-p)
+  :init
+  ;; Add prompt indicator to `completing-read-multiple'.
+  ;; We display [CRM<separator>], e.g., [CRM,] if the separator is a comma.
+  (defun crm-indicator (args)
+    (cons (format "[CRM%s] %s"
+                  (replace-regexp-in-string
+                   "\\`\\[.*?]\\*\\|\\[.*?]\\*\\'" ""
+                   crm-separator)
+                  (car args))
+          (cdr args)))
+  (advice-add #'completing-read-multiple :filter-args #'crm-indicator)
+
+  ;; Do not allow the cursor in the minibuffer prompt
+  (setq minibuffer-prompt-properties
+        '(read-only t cursor-intangible t face minibuffer-prompt))
+  (add-hook 'minibuffer-setup-hook #'cursor-intangible-mode))
+
+;; Optionally use the `orderless' completion style.
+(use-package orderless
+  :custom
+  ;; Configure a custom style dispatcher (see the Consult wiki)
+  ;; (orderless-style-dispatchers '(+orderless-consult-dispatch orderless-affix-dispatch))
+  ;; (orderless-component-separator #'orderless-escapable-split-on-space)
+  (completion-styles '(orderless basic))
+  (completion-category-defaults nil)
+  (completion-category-overrides '((file (styles partial-completion)))))
 #+end_src
