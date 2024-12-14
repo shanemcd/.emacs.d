@@ -162,8 +162,7 @@ logic here.
 (use-package org
   :mode ("\\.org\\'" . org-mode)
   :bind (("C-c l" . org-store-link)
-         ("C-c c" . org-capture)
-         ("C-c a" . org-agenda)
+         ("C-c c" . org-capture)        
          ("C-c C-w" . org-refile))
   :config
   (require 'org-tempo)
@@ -684,6 +683,7 @@ Ensure that the proper shell is used on macOS. For me, this was the solution to:
          ("C-c k" . consult-kmacro)
          ("C-c m" . consult-man)
          ("C-c i" . consult-info)
+         ("C-c a" . consult-org-agenda)
          ([remap Info-search] . consult-info)
          ;; C-x bindings in `ctl-x-map'
          ("C-x M-:" . consult-complex-command)     ;; orig. repeat-complex-command
