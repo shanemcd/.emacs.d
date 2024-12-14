@@ -196,9 +196,6 @@ logic here.
         org-src-preserve-indentation t
         org-src-tab-acts-natively t))
 
-(use-package org-modern
-  :hook (org-mode . global-org-modern-mode))
-
 (use-package org-appear
   :init
   (add-hook 'org-mode-hook 'org-appear-mode))
@@ -213,6 +210,10 @@ logic here.
 
   :bind (("C-c r b" . org-roam-buffer-toggle)
          ("C-c r f" . org-roam-node-find)))
+
+(use-package org-superstar
+  :after org
+  :hook (org-mode . org-superstar-mode))
 #+END_SRC
 
 *** ~ox-gfm~
@@ -253,7 +254,7 @@ https://github.com/larstvei/ox-gfm
 https://github.com/mozilla/Fira
 
 #+BEGIN_SRC emacs-lisp
-(add-to-list 'default-frame-alist '(font . "Fira Code"))
+(add-to-list 'default-frame-alist '(font . "Fira Mono"))
 #+END_SRC
 
 *** Hide Splash Screen
@@ -824,11 +825,6 @@ Ensure that the proper shell is used on macOS. For me, this was the solution to:
               ("RET" . vertico-directory-enter)
               ("DEL" . vertico-directory-delete-char)))
 
-(use-package vertico-prescient
-  :after vertico
-  :config
-  (vertico-prescient-mode))
-
 ;; Persist history over Emacs restarts. Vertico sorts by history position.
 (use-package savehist
   :init
@@ -869,4 +865,16 @@ Ensure that the proper shell is used on macOS. For me, this was the solution to:
   (completion-styles '(orderless ))
   (completion-category-defaults nil)
   (completion-category-overrides '((file (styles partial-completion)))))
+
+(use-package org-superstar
+  :config
+  (setq org-superstar-leading-bullet " ")
+  (setq org-superstar-headline-bullets-list '("◉" "○" "⚬" "◈" "◇"))
+  (setq org-superstar-special-todo-items t) ;; Makes TODO header bullets into boxes
+  (setq org-superstar-todo-bullet-alist '(("TODO"  . 9744)
+                                          ("WAIT"  . 9744)
+                                          ("READ"  . 9744)
+                                          ("PROG"  . 9744)
+										  ("DONE"  . 9745)))
+  :hook (org-mode . org-superstar-mode))
 #+end_src
