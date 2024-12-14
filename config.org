@@ -319,13 +319,11 @@ https://www.emacswiki.org/emacs/WindMove
 *** Fancy mode line
 
 #+begin_src emacs-lisp
-(use-package telephone-line
+(use-package moody
   :config
-  (setq telephone-line-subseparator-faces '())
-  (setq telephone-line-height 24
-        telephone-line-evil-use-short-tag t)
-
-  (telephone-line-mode 1))
+  (moody-replace-mode-line-front-space)
+  (moody-replace-mode-line-buffer-identification)
+  (moody-replace-vc-mode))
 #+end_src
 
 #+RESULTS:
