@@ -23,3 +23,5 @@
 /server/
 /org-roam.db
 /bookmarks~
+/%backup%~
+/history
