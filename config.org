@@ -162,7 +162,7 @@ logic here.
 (use-package org
   :mode ("\\.org\\'" . org-mode)
   :bind (("C-c l" . org-store-link)
-         ("C-c c" . org-capture)        
+         ("C-c c" . org-capture)
          ("C-c C-w" . org-refile))
   :config
   (require 'org-tempo)
@@ -194,11 +194,13 @@ logic here.
         org-src-window-setup 'current-window
         org-src-strip-leading-and-trailing-blank-lines t
         org-src-preserve-indentation t
+        org-hide-emphasis-markers t
         org-src-tab-acts-natively t))
 
 (use-package org-appear
-  :init
-  (add-hook 'org-mode-hook 'org-appear-mode))
+  :hook (org-mode . org-appear-mode)
+  :config
+  (setq org-appear-autolinks t))
 
 (use-package org-roam
   :config
