@@ -688,6 +688,7 @@ I unbd ~flyspell-mode-map~ because I use ~C-.~ for ~imenu-list~.
 *** Proving ground
 
 Trying to piece together a more modern completion system
+
 **** ~marginalia~ 
 #+begin_src emacs-lisp
 ;; Enable rich annotations using the Marginalia package
@@ -848,7 +849,7 @@ Trying to piece together a more modern completion system
   :after lsp-mode)
 #+END_SRC
 
-*** ~embark~
+**** ~embark~
 
 #+BEGIN_SRC emacs-lisp
 ;; Pulls in embark as a dependency
@@ -858,7 +859,7 @@ Trying to piece together a more modern completion system
   (embark-collect-mode . consult-preview-at-point-mode))
 #+END_SRC
 
-*** ~vertico~
+**** ~vertico~
 #+BEGIN_SRC emacs-lisp
 (use-package vertico
   :custom
@@ -875,7 +876,7 @@ Trying to piece together a more modern completion system
               ("DEL" . vertico-directory-delete-char)))
 #+END_SRC
 
-*** ~savehist~
+**** ~savehist~
 #+BEGIN_SRC emacs-lisp
 ;; Persist history over Emacs restarts. Vertico sorts by history position.
 (use-package savehist
@@ -883,7 +884,7 @@ Trying to piece together a more modern completion system
   (savehist-mode))
 #+END_SRC
 
-*** ~emacs~
+**** ~emacs~
 #+BEGIN_SRC emacs-lisp
 ;; A few more useful configurations...
 (use-package emacs
@@ -912,7 +913,7 @@ Trying to piece together a more modern completion system
   (add-hook 'minibuffer-setup-hook #'cursor-intangible-mode))
 #+END_SRC
 
-*** ~orderless~
+**** ~orderless~
 
 #+BEGIN_SRC emacs-lisp
 ;; Optionally use the `orderless' completion style.
@@ -926,13 +927,13 @@ Trying to piece together a more modern completion system
   (completion-category-overrides '((file (styles partial-completion)))))
 #+end_src
 
-*** ~wgrep~
+**** ~wgrep~
 
 #+begin_src emacs-lisp
 (use-package wgrep)
 #+end_src
 
-*** ~lsp-mode~
+**** ~lsp-mode~
 
 #+begin_src emacs-lisp
 (use-package lsp-mode
