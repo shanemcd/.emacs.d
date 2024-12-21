@@ -966,3 +966,11 @@ Trying to piece together a more modern completion system
                          (require 'lsp-pyright)
                          (lsp-deferred))))  ; or lsp-deferred
 #+end_src
+
+**** ~smart-mode-line~
+
+#+begin_src emacs-lisp
+(use-package smart-mode-line
+  :init
+  (sml/setup))
+#+end_src
