@@ -994,3 +994,16 @@ Trying to piece together a more modern completion system
   :init
   (sml/setup))
 #+end_src
+
+** Miscellaneous configuration
+
+*** Swap super and meta keys on macOS
+
+This makes it consistent with Linux.
+
+#+begin_src emacs-lisp
+(when (eq system-type 'darwin)
+  (setq mac-command-modifier 'meta)
+  (setq mac-option-modifier 'super)
+  (setq mac-control-modifier 'control))
+#+end_src
