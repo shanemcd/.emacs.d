@@ -283,6 +283,8 @@ https://github.com/larstvei/ox-gfm
 #+BEGIN_SRC emacs-lisp
 (add-hook 'markdown-mode-hook 'auto-fill-mode)
 
+(add-hook 'org-mode-hook 'auto-fill-mode)
+
 (setq-default fill-column 80)
 #+END_SRC
 
