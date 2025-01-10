@@ -325,9 +325,7 @@ https://github.com/tonsky/FiraCode
 **** Theme
 
 #+BEGIN_SRC emacs-lisp
-(use-package base16-theme
-  :config
-  (load-theme 'base16-tomorrow-night t))
+(use-package base16-theme)
 #+END_SRC
 
 #+begin_src emacs-lisp
