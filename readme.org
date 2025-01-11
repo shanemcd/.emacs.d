@@ -283,6 +283,16 @@ https://github.com/larstvei/ox-gfm
 #+end_src
 
 *** Interface Customizations
+**** Smooth scrolling
+#+begin_src emacs-lisp
+(use-package ultra-scroll
+  :quelpa (ultra-scroll :fetcher github :repo "jdtsmith/ultra-scroll")
+  :init
+  (setq scroll-conservatively 101 ; important!
+        scroll-margin 0)
+  :config
+  (ultra-scroll-mode 1))
+#+end_src
 **** Columns
 
 #+BEGIN_SRC emacs-lisp
