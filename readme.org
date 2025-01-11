@@ -389,15 +389,6 @@ https://www.emacswiki.org/emacs/WindMove
 (global-set-key [left-fringe mouse-1] #'my-toggle-emacs-bookmark)
 #+end_src
 
-**** Fancy mode line
-
-#+begin_src emacs-lisp
-
-#+end_src
-
-#+RESULTS:
-: t
-
 **** Increase spacing / padding of windows and frames
 #+begin_src emacs-lisp
 (use-package spacious-padding
