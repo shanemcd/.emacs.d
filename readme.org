@@ -27,6 +27,8 @@ ignored:
 
 ** Set up a package management system
 
+*** Bootstrap ~use-package~
+
 #+begin_src emacs-lisp
 (require 'package)
 
@@ -45,6 +47,9 @@ ignored:
 
 (require 'use-package-ensure)
 (setq use-package-always-ensure t)
+
+(use-package quelpa)
+(use-package quelpa-use-package)
 #+end_src
 
 ** Make a frame if we're running daemonized
