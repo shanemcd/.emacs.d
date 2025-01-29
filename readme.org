@@ -1011,3 +1011,14 @@ This makes it consistent with Linux.
   (setq mac-option-modifier 'super)
   (setq mac-control-modifier 'control))
 #+end_src
+
+*** Kill all buffers except the current one
+
+Pulled from https://www.emacswiki.org/emacs/KillingBuffers#h5o-2
+
+#+begin_src emacs-lisp
+(defun kill-other-buffers ()
+  "Kill all other buffers."
+  (interactive)
+  (mapc 'kill-buffer (delq (current-buffer) (buffer-list))))
+#+end_src
