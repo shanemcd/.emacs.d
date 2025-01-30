@@ -354,7 +354,10 @@ https://github.com/tonsky/FiraCode
 **** Theme
 
 #+BEGIN_SRC emacs-lisp
-(use-package base16-theme)
+(use-package base16-theme
+  :config
+  (load-theme 'base16-ia-dark t)
+)
 #+END_SRC
 
 **** Wind Move
