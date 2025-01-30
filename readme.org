@@ -293,7 +293,9 @@ https://github.com/larstvei/ox-gfm
 **** ~vterm~
 
 #+begin_src emacs-lisp
-(use-package vterm)
+(use-package vterm
+  :config
+  (setq vterm-tramp-shells '(("sshx" "/bin/zsh"))))
 #+end_src
 
 *** Interface Customizations
@@ -556,7 +558,8 @@ I unbd ~flyspell-mode-map~ because I use ~C-.~ for ~imenu-list~.
 (use-package tramp
   :defer t
   :config
-  (setopt tramp-remote-path '(tramp-own-remote-path)))
+  (setopt tramp-remote-path '(tramp-own-remote-path))
+  (setq tramp-histfile-override nil))
 #+end_src
 
 **** ~magit~
