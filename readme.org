@@ -554,7 +554,9 @@ I unbd ~flyspell-mode-map~ because I use ~C-.~ for ~imenu-list~.
 
 #+begin_src emacs-lisp
 (use-package tramp
-  :defer t)
+  :defer t
+  :config
+  (setopt tramp-remote-path '(tramp-own-remote-path)))
 #+end_src
 
 **** ~magit~
