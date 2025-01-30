@@ -429,8 +429,10 @@ https://www.emacswiki.org/emacs/WindMove
   (require 'llm-ollama)
   (setopt ellama-provider
 	  (make-llm-ollama
-	   :chat-model "gemma2:9b"
-	   :embedding-model "gemma2:9b")))
+       :host "tot"
+       :port 11434
+       :chat-model "deepseek-r1:8b"
+	   :embedding-model "deepseek-r1:8b")))
 #+end_src
 
 *** To be filed or tossed away at some point...
