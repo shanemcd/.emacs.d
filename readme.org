@@ -872,8 +872,8 @@ Trying to piece together a more modern completion system
   ;; (keymap-set consult-narrow-map (concat consult-narrow-key " ?") #'consult-narrow-help)
 )
 
-(use-package consult-lsp
-  :after lsp-mode)
+(use-package consult-eglot
+  :after eglot)
 #+END_SRC
 
 **** ~embark~
@@ -960,38 +960,17 @@ Trying to piece together a more modern completion system
 (use-package wgrep)
 #+end_src
 
-**** ~lsp-mode~
+**** ~eglot~
 
 #+begin_src emacs-lisp
-(use-package lsp-mode
-  :init
-  ;; set prefix for lsp-command-keymap (few alternatives - "C-l", "C-c l")
-  (setq lsp-keymap-prefix "C-c l")
-  :hook
-  (python-mode . lsp-deferred)
-  :commands lsp-deferred
+(use-package eglot)
+
+(use-package dape
+  :after eglot
   :config
-  (setq company-idle-delay 0)
-  (setq company-minimum-prefix-length 1)
-
-
-  ;; Set up before-save hooks to format buffer and add/delete imports.
-  (defun lsp-go-install-save-hooks ()
-    (add-hook 'before-save-hook #'lsp-format-buffer t t)
-    (add-hook 'before-save-hook #'lsp-organize-imports t t))
-
-  (add-hook 'go-mode-hook #'lsp-go-install-save-hooks)
-  (add-hook 'go-mode-hook #'lsp-deferred))
-
-(use-package lsp-ui :commands lsp-ui-mode)
-
-(use-package dap-mode)
-
-(use-package lsp-pyright
-  :custom (lsp-pyright-langserver-command "pyright") ;; or basedpyright
-  :hook (python-mode . (lambda ()
-                         (require 'lsp-pyright)
-                         (lsp-deferred))))  ; or lsp-deferred
+  ;; Turn on global bindings for setting breakpoints with mouse
+  (dape-breakpoint-global-mode)
+  (setq dape-inlay-hints t))
 #+end_src
 
 **** ~smart-mode-line~
