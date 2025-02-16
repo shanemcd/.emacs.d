@@ -396,10 +396,10 @@ https://www.emacswiki.org/emacs/WindMove
   :config
   (spacious-padding-mode))
 #+end_src
-**** Start full-screen
+**** Start maximized
  
 #+begin_src emacs-lisp
-(toggle-frame-fullscreen)
+(toggle-frame-maximized)
 #+end_src
 **** Writing environment
 #+begin_src emacs-lisp
