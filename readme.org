@@ -415,8 +415,8 @@ https://www.emacswiki.org/emacs/WindMove
 	  (make-llm-ollama
        :host "tot"
        :port 11434
-       :chat-model "deepseek-r1:8b"
-	   :embedding-model "deepseek-r1:8b")))
+       :chat-model "gemma3:12b"
+	   :embedding-model "gemma3:12b")))
 #+end_src
 
 *** To be filed or tossed away at some point...
