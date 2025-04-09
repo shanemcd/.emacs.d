@@ -314,7 +314,7 @@ https://github.com/larstvei/ox-gfm
 https://github.com/tonsky/FiraCode
 
 #+BEGIN_SRC emacs-lisp
-(add-to-list 'default-frame-alist '(font . "Iosevka Etoile"))
+(add-to-list 'default-frame-alist '(font . "Iosevka Fixed SS05 Md Ex"))
 #+END_SRC
 
 **** Hide Splash Screen
@@ -993,4 +993,26 @@ Pulled from https://www.emacswiki.org/emacs/KillingBuffers#h5o-2
 
 #+begin_src emacs-lisp
 (setq doc-view-resolution 300)
+#+end_src
+
+*** Custom font utilities
+
+#+begin_src emacs-lisp
+(defun preview-font ()
+  "Interactively preview available fonts."
+  (interactive)
+  (let ((font (completing-read "Preview font: " (font-family-list))))
+    (set-frame-font font t t)))
+
+(defun preview-font-full ()
+  "Preview full font faces including variants."
+  (interactive)
+  (let* ((fonts (delete-dups (sort (x-list-fonts "*" nil) #'string<)))
+         (font (completing-read "Preview font face: " fonts)))
+    (set-frame-font font t t)))
+
+(defun print-current-font ()
+  "Print the current frame font in the minibuffer and echo area."
+  (interactive)
+  (message "Current font: %s" (frame-parameter nil 'font)))
 #+end_src
