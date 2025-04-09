@@ -959,6 +959,12 @@ Trying to piece together a more modern completion system
   (sml/setup))
 #+end_src
 
+*** Misc
+
+**** ~sudo-edit~
+#+begin_src emacs-lisp
+(use-package sudo-edit)
+#+end_src
 ** Miscellaneous configuration
 
 *** Swap super and meta keys on macOS
