@@ -314,7 +314,14 @@ https://github.com/larstvei/ox-gfm
 https://github.com/tonsky/FiraCode
 
 #+BEGIN_SRC emacs-lisp
-(add-to-list 'default-frame-alist '(font . "-UKWN-Iosevka Term-medium-normal-expanded-*-16-*-*-*-d-0-iso10646-1"))
+;; Set Iosevka SS05 Expanded using XLFD names for each OS
+(set-frame-font
+ (cond
+  ((eq system-type 'darwin)
+   "-*-Iosevka SS05-medium-normal-expanded-*-12-*-*-*-m-0-iso10646-1")
+  ((eq system-type 'gnu/linux)
+   "-UKWN-Iosevka SS05-medium-normal-expanded-*-16-*-*-*-d-0-iso10646-1"))
+ t t)
 #+END_SRC
 
 **** Hide Splash Screen
