@@ -314,7 +314,7 @@ https://github.com/larstvei/ox-gfm
 https://github.com/tonsky/FiraCode
 
 #+BEGIN_SRC emacs-lisp
-(add-to-list 'default-frame-alist '(font . "-*-Iosevka SS05-medium-normal-expanded-*-12-*-*-*-m-0-iso10646-1"))
+(add-to-list 'default-frame-alist '(font . "-UKWN-Iosevka Term-medium-normal-expanded-*-16-*-*-*-d-0-iso10646-1"))
 #+END_SRC
 
 **** Hide Splash Screen
