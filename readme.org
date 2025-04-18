@@ -501,13 +501,13 @@ https://www.emacswiki.org/emacs/WindMove
 
 **** ~flyspell~
 
-I unbd ~flyspell-mode-map~ because I use ~C-.~ for ~imenu-list~.
+I unbind ~flyspell-mode-map~ because I use ~C-.~ for ~embark-act~.
 
 #+BEGIN_SRC emacs-lisp
 (use-package flyspell
   :delight
-  :ensure f
   :config
+  (define-key flyspell-mode-map (kbd "C-.") nil)
   (add-hook 'prog-mode-hook 'flyspell-prog-mode)
   (add-hook 'text-mode-hook 'flyspell-mode)
   (add-hook 'markdown-mode-hook 'flyspell-mode))
