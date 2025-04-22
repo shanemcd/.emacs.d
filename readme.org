@@ -318,7 +318,7 @@ https://github.com/tonsky/FiraCode
 (set-frame-font
  (cond
   ((eq system-type 'darwin)
-   "-*-Iosevka SS05-medium-normal-expanded-*-12-*-*-*-m-0-iso10646-1")
+   "-*-Iosevka SS05-medium-normal-expanded-*-16-*-*-*-m-0-iso10646-1")
   ((eq system-type 'gnu/linux)
    "-UKWN-Iosevka SS05-medium-normal-expanded-*-16-*-*-*-d-0-iso10646-1"))
  t t)
