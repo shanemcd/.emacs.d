@@ -577,6 +577,14 @@ I unbind ~flyspell-mode-map~ because I use ~C-.~ for ~embark-act~.
   (global-set-key (kbd "C-e") 'mwim-end))
 #+END_SRC
 
+**** ~nerd-icons~
+#+begin_src emacs-lisp
+(use-package nerd-icons)
+
+(use-package nerd-icons-dired
+  :hook
+  (dired-mode . nerd-icons-dired-mode))
+#+end_src
 **** ~rainbow-delimeters~
 
 #+BEGIN_SRC emacs-lisp
@@ -600,26 +608,6 @@ I unbind ~flyspell-mode-map~ because I use ~C-.~ for ~embark-act~.
   :commands (vundo)
   :config
   (setq vundo-compact-display t))
-#+END_SRC
-
-**** ~neotree~
-#+BEGIN_SRC emacs-lisp
-(use-package all-the-icons)
-(use-package neotree
-  :config
-  (setq neo-autorefresh t)
-  (setq neo-window-fixed-size nil)
-  (setq neo-reset-size-on-open nil)
-  (eval-after-load "neotree"
-    '(add-to-list 'window-size-change-functions
-                  (lambda (frame)
-                    (let ((neo-window (neo-global--get-window)))
-                      (unless (null neo-window)
-                        (setq neo-window-width (window-width neo-window)))))))
-  (setq neo-theme (if (display-graphic-p) 'icons 'arrow))
-  :bind
-  (:map global-map
-	("s-t"   . neotree-toggle)))
 #+END_SRC
 
 **** ~ws-butler~
