@@ -582,6 +582,7 @@ I unbind ~flyspell-mode-map~ because I use ~C-.~ for ~embark-act~.
 (use-package nerd-icons)
 
 (use-package nerd-icons-dired
+  :delight
   :hook
   (dired-mode . nerd-icons-dired-mode))
 #+end_src
