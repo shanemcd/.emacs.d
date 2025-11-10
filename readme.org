@@ -38,14 +38,9 @@ ignored:
 
 (setq package-enable-at-startup nil)
 
-(unless (package-installed-p 'use-package)
-  (package-refresh-contents)
-  (package-install 'use-package))
-
 (eval-when-compile
   (require 'use-package))
 
-(require 'use-package-ensure)
 (setq use-package-always-ensure t)
 
 (use-package quelpa)
@@ -157,6 +152,17 @@ keyword when calling ~use-package~.
 (use-package yaml-mode
   :config
   (setq yaml-indent-offset 2))
+
+(defun my/yaml-outline-setup ()
+  "Configure outline-minor-mode for YAML to fold both keys and list items."
+  ;; Match lines like:
+  ;;   topKey:
+  ;;   - listItem:
+  ;;   - listItem
+  (setq-local outline-regexp "^\\([[:space:]]*\\(-\\|\\w\\)\\)")
+  (outline-minor-mode 1))
+
+(add-hook 'yaml-mode-hook #'my/yaml-outline-setup)
 #+END_SRC
 
 **** ~groovy-mode~
@@ -280,10 +286,21 @@ https://github.com/larstvei/ox-gfm
 
 #+begin_src emacs-lisp
 (use-package vterm
-  :config
-  (setq vterm-tramp-shells '(("sshx" "/bin/zsh"))))
-#+end_src
+  ;; :config
+  ;; (setq vterm-tramp-shells '(("sshx" "/bin/zsh")))
 
+)
+#+end_src
+**** ~eat~
+#+begin_src emacs-lisp
+(quelpa '(eat :fetcher git
+              :url "https://codeberg.org/akib/emacs-eat"
+              :files ("*.el" ("term" "term/*.el") "*.texi"
+                      "*.ti" ("terminfo/e" "terminfo/e/*")
+                      ("terminfo/65" "terminfo/65/*")
+                      ("integration" "integration/*")
+                      (:exclude ".dir-locals.el" "*-tests.el"))))
+#+end_src
 *** Interface Customizations
 **** Smooth scrolling
 #+begin_src emacs-lisp
@@ -347,8 +364,7 @@ https://github.com/tonsky/FiraCode
 #+BEGIN_SRC emacs-lisp
 (use-package base16-theme
   :config
-  (load-theme 'base16-ia-dark t)
-)
+  (load-theme 'base16-ia-light t))
 #+END_SRC
 
 **** Wind Move
@@ -422,10 +438,13 @@ https://www.emacswiki.org/emacs/WindMove
 	  (make-llm-ollama
        :host "tot"
        :port 11434
-       :chat-model "gemma3:12b"
-	   :embedding-model "gemma3:12b")))
+       :chat-model "granite3.2:8b"
+	   :embedding-model "granite3.2:8b")))
 #+end_src
-
+**** ~claude~
+#+begin_src emacs-lisp
+(quelpa '(claudemacs :fetcher github :repo "cpoile/claudemacs"))
+#+end_src
 *** To be filed or tossed away at some point...
 **** ~browse-at-remote~
 
@@ -471,7 +490,8 @@ https://www.emacswiki.org/emacs/WindMove
   :after dired
   :config
   (bind-key "<tab>" #'dired-subtree-toggle dired-mode-map)
-  (bind-key "<backtab>" #'dired-subtree-cycle dired-mode-map))
+  (bind-key "<backtab>" #'dired-subtree-cycle dired-mode-map)
+  (setq dired-subtree-use-backgrounds nil))
 #+END_SRC
 
 **** ~drag-stuff~
@@ -656,11 +676,23 @@ I unbind ~flyspell-mode-map~ because I use ~C-.~ for ~embark-act~.
        ("M-8" . 'winum-select-window-8))
   )
 #+END_SRC
-
+**** ~pandoc-mode~
 #+begin_src emacs-lisp
 (use-package pandoc-mode
   :config
   (add-hook 'markdown-mode-hook 'pandoc-mode))
+#+end_src
+
+**** ~marp-mode~
+
+#+begin_src emacs-lisp
+;; (use-package marp-mode
+;;   :quelpa (marp-mode :fetcher github :repo "shanemcd/marp-mode")
+;;   :hook (markdown-mode . marp-mode))
+
+(use-package marp-mode
+  :load-path "/var/home/shanemcd/github/shanemcd/marp-mode"
+  :hook (markdown-mode . marp-mode))
 #+end_src
 
 **** ~hide-mode-line~
@@ -683,14 +715,21 @@ I unbind ~flyspell-mode-map~ because I use ~C-.~ for ~embark-act~.
   (setq exec-path-from-shell-arguments '("-l"))
   (setenv "SHELL" "/bin/zsh")
   (exec-path-from-shell-initialize)
-  (exec-path-from-shell-copy-env "GOPATH")
-  (exec-path-from-shell-copy-env "PATH")
-  (exec-path-from-shell-copy-env "LC_ALL")
-  (exec-path-from-shell-copy-env "LANG")
-  (exec-path-from-shell-copy-env "LC_TYPE")
-  (exec-path-from-shell-copy-env "SSH_AGENT_PID")
-  (exec-path-from-shell-copy-env "SSH_AUTH_SOCK")
-  (exec-path-from-shell-copy-env "SHELL"))
+  (dolist (var '("GOPATH"
+                 "PATH"
+                 "LC_ALL"
+                 "LANG"
+                 "LC_TYPE"
+                 "SSH_AGENT_PID"
+                 "SSH_AUTH_SOCK"
+                 "SHELL"
+                 "CLAUDE_CODE_USE_VERTEX"
+                 "CLOUD_ML_REGION"
+                 "ANTHROPIC_VERTEX_PROJECT_ID"
+                 "ANTHROPIC_MODEL"
+                 "ANTHROPIC_SMALL_FAST_MODEL"))
+    (exec-path-from-shell-copy-env var)))
+
 #+END_SRC
 
 *** Proving ground
@@ -1011,4 +1050,14 @@ Pulled from https://www.emacswiki.org/emacs/KillingBuffers#h5o-2
   "Print the current frame font in the minibuffer and echo area."
   (interactive)
   (message "Current font: %s" (frame-parameter nil 'font)))
+#+end_src
+
+*** Ensure ~HOME~ is not a symlink
+On Fedora Kinoite and other Atomic Desktops, ~/home~ is symlinked to
+~/var/home~. This causes issues with breakpoints not working in certain debuggers.
+
+#+begin_src emacs-lisp
+(when-let ((real-home (file-truename (getenv "HOME"))))
+  (when (not (string= (getenv "HOME") real-home))
+    (setenv "HOME" real-home)))
 #+end_src
