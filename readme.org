@@ -43,6 +43,7 @@ ignored:
 
 (setq use-package-always-ensure t)
 
+(setq quelpa-update-melpa-p nil)
 (use-package quelpa)
 (use-package quelpa-use-package)
 #+end_src
