@@ -306,10 +306,10 @@ https://github.com/larstvei/ox-gfm
 **** Smooth scrolling
 #+begin_src emacs-lisp
 (use-package ultra-scroll
-  :quelpa (ultra-scroll :fetcher github :repo "jdtsmith/ultra-scroll")
+  ;:vc (:url "https://github.com/jdtsmith/ultra-scroll") ; if desired (emacs>=v30)
   :init
-  (setq scroll-conservatively 101 ; important!
-        scroll-margin 0)
+  (setq scroll-conservatively 3 ; or whatever value you prefer, since v0.4
+        scroll-margin 0)        ; important: scroll-margin>0 not yet supported
   :config
   (ultra-scroll-mode 1))
 #+end_src
