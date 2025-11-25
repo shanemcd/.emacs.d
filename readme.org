@@ -363,9 +363,19 @@ https://github.com/tonsky/FiraCode
 **** Theme
 
 #+BEGIN_SRC emacs-lisp
-(use-package base16-theme
-  :config
-  (load-theme 'base16-ia-light t))
+(use-package base16-theme)
+#+END_SRC
+
+**** Auto Dark Mode
+
+Automatically switch between light and dark themes based on system appearance.
+
+#+BEGIN_SRC emacs-lisp
+(use-package auto-dark
+  :custom
+  (auto-dark-themes '((base16-tomorrow-night) (base16-tomorrow)))
+  :init
+  (auto-dark-mode))
 #+END_SRC
 
 **** Wind Move
