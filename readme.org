@@ -738,7 +738,7 @@ I unbind ~flyspell-mode-map~ because I use ~C-.~ for ~embark-act~.
                  "CLOUD_ML_REGION"
                  "ANTHROPIC_VERTEX_PROJECT_ID"
                  "ANTHROPIC_MODEL"
-                 "ANTHROPIC_SMALL_FAST_MODEL"))
+                 "ANTHROPIC_DEFAULT_HAIKU_MODEL"))
     (exec-path-from-shell-copy-env var)))
 
 #+END_SRC
