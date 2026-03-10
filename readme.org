@@ -723,7 +723,7 @@ I unbind ~flyspell-mode-map~ because I use ~C-.~ for ~embark-act~.
 #+BEGIN_SRC emacs-lisp
 (use-package exec-path-from-shell
   :config
-  (setq exec-path-from-shell-arguments '("-l"))
+  (setq exec-path-from-shell-arguments '("-li"))
   (setenv "SHELL" "/bin/zsh")
   (exec-path-from-shell-initialize)
   (dolist (var '("GOPATH"
