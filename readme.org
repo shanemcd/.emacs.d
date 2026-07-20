@@ -48,25 +48,43 @@ ignored:
 (use-package quelpa-use-package)
 #+end_src
 
-** Make a frame if we're running daemonized
+** Emacs server (local + daemon)
 
-Note that I set ~EMACS_SERVER_AUTH_KEY~ and launch emacs via ~launchctl~. Since I
-currently only run emacs as a daemon on macOS I do not have any conditional
-logic here.
+Start a local Unix-socket server in interactive sessions so ~emacsclient~ (and
+agents) can open files / eval Lisp in the running Emacs. The macOS daemon path
+still uses TCP with ~EMACS_SERVER_AUTH_KEY~ via ~launchctl~.
 
 #+begin_src emacs-lisp
-(defun open-initial-frame-when-daemonized ()
-  (when (daemonp)
-    (setq server-use-tcp t)
-    (setq server-auth-key (getenv "EMACS_SERVER_AUTH_KEY"))
-    (setq server-port 52698)
+(defun shanemcd/start-emacs-server ()
+  "Start Emacs server: TCP when daemonized, local socket otherwise."
+  (require 'server)
+  (unless (server-running-p)
+    (if (daemonp)
+        (progn
+          (setq server-use-tcp t
+                server-auth-key (getenv "EMACS_SERVER_AUTH_KEY")
+                server-port 52698)
+          (server-start)
+          ;; Adjust "mac" if needed for your display configuration.
+          (make-frame '((display . "mac"))))
+      ;; Interactive / Linux GUI: default local socket under
+      ;; /run/user/$UID/emacs/server (or /tmp/emacs$UID/server).
+      (setq server-use-tcp nil)
+      (server-start))))
 
-    (server-start)
+(add-hook 'after-init-hook #'shanemcd/start-emacs-server)
 
-    (make-frame '((display . "mac"))))) ;; Adjust "mac" if needed, depending on your display configuration
-
-;; Run the function after the daemon starts
-(add-hook 'after-init-hook 'open-initial-frame-when-daemonized)
+;; For agents / emacsclient --eval: open FILE in another window and leave
+;; the selected window (e.g. agent-shell) alone.
+(defun shanemcd/display-file-other-window (file)
+  "Visit FILE in another window without selecting it."
+  (let ((buffer (find-file-noselect (expand-file-name file))))
+    (display-buffer buffer
+                    '((display-buffer-reuse-window
+                       display-buffer-pop-up-window)
+                      (inhibit-same-window . t)
+                      (reusable-frames . nil)))
+    nil))
 #+end_src
 
 *** Why am I doing this?
@@ -139,6 +157,28 @@ keyword when calling ~use-package~.
 (use-package markdown-mode
   :config
   (setq markdown-fontify-code-blocks-natively t))
+#+END_SRC
+
+**** ~grip-mode~ (GitHub-flavored Markdown preview)
+
+Uses [[https://github.com/chrishrb/go-grip][go-grip]] for local offline GFM preview (no GitHub API rate limits). Toggle
+with ~C-c C-c g~ in Markdown buffers; preview opens in the browser and refreshes
+on save.
+
+#+BEGIN_SRC emacs-lisp
+(use-package grip-mode
+  :after markdown-mode
+  :bind (:map markdown-mode-command-map
+         ("g" . grip-mode))
+  :config
+  ;; Ensure ~/.local/bin (go-grip) is visible even if Emacs was started
+  ;; before the binary was installed.
+  (let ((local-bin (expand-file-name "~/.local/bin")))
+    (add-to-list 'exec-path local-bin)
+    (setenv "PATH" (concat local-bin path-separator (getenv "PATH"))))
+  (setopt grip-command 'go-grip
+          grip-preview-in-webkit nil
+          grip-real-time-refresh nil))
 #+END_SRC
 
 **** ~show-paren-mode~
@@ -456,6 +496,123 @@ https://www.emacswiki.org/emacs/WindMove
 #+begin_src emacs-lisp
 (quelpa '(claudemacs :fetcher github :repo "cpoile/claudemacs"))
 #+end_src
+
+**** ~gptel~ (Cursor models via open-cursor proxy)
+
+Talks to a local OpenAI-compatible proxy on ~127.0.0.1:32124~ that shells out to
+the Cursor ~agent~ CLI (same approach as
+[[https://github.com/Nomadcxx/opencode-cursor][Nomadcxx/opencode-cursor]]).
+
+Prerequisites:
+- ~agent login~ (Cursor Agent CLI)
+- ~systemctl --user enable --now open-cursor-proxy~ (serves ~/v1/chat/completions~)
+- Optional: ~CURSOR_ACP_SESSION_RESUME=1~ for incremental multi-turn via ~--resume~
+
+#+begin_src emacs-lisp
+(use-package gptel
+  :commands (gptel gptel-send gptel-menu)
+  :bind ("C-c RET" . gptel-send)
+  :config
+  (setq gptel-model 'cursor-grok-4.5-high-fast
+        gptel-backend
+        (gptel-make-openai "Cursor"
+          :host "127.0.0.1:32124"
+          :protocol "http"
+          :endpoint "/v1/chat/completions"
+          :stream t
+          :key "unused"
+          :models '(cursor-grok-4.5-high-fast
+                    cursor-grok-4.5-high
+                    cursor-grok-4.5-medium-fast
+                    composer-2.5
+                    claude-4.6-opus-high
+                    auto))))
+#+end_src
+
+**** ~agent-shell~ (Cursor + Claude/Vertex via ACP)
+
+Native Emacs shell for LLM agents over [[https://agentclientprotocol.com][ACP]].
+Loaded from a local checkout for development
+([[https://github.com/xenodium/agent-shell][xenodium/agent-shell]]); ~acp.el~ and ~shell-maker~ still come from
+MELPA.
+
+Providers:
+- *Cursor* — ~agent acp --approve-mcps~ (existing ~agent login~)
+- *Claude* — ~claude-agent-acp~ over Vertex AI (~CLAUDE_CODE_USE_VERTEX~ +
+  ~gcloud~ ADC from ~/.zshrc)
+
+Prerequisites on ~PATH~ (via ~exec-path-from-shell~): ~agent~,
+~claude-agent-acp~ (~npm i -g @agentclientprotocol/claude-agent-acp~).
+
+Sessions persist across Emacs restarts via
+[[https://github.com/timfel/agent-shell-desktop.el][agent-shell-desktop]] +
+~desktop-save-mode~ (saves cwd, agent config, and session id). Enable
+~agent-shell-desktop-mode~ before Desktop restores buffers.
+
+#+begin_src emacs-lisp
+;; Dependencies still from MELPA (not vendored in the local checkout).
+(use-package acp :ensure t)
+(use-package shell-maker :ensure t)
+
+(use-package agent-shell
+  :ensure nil
+  :load-path "/var/home/shanemcd/github/xenodium/agent-shell"
+  :demand t
+  :bind (("C-c A" . agent-shell-cursor-start-agent)
+         ("C-c C" . agent-shell-anthropic-start-claude-code))
+  :config
+  ;; Cursor — `agent login` outside Emacs; no ACP authenticate request.
+  (setq agent-shell-cursor-authentication
+        (agent-shell-cursor-make-authentication :none t)
+        agent-shell-cursor-acp-command '("agent" "acp" "--approve-mcps"))
+
+  ;; Claude — Vertex via env from ~/.zshrc (CLAUDE_CODE_USE_VERTEX, etc.).
+  (setq agent-shell-anthropic-authentication
+        (agent-shell-anthropic-make-authentication :login t))
+
+  ;; Environments are set after exec-path-from-shell (later in this file).
+
+  (setq agent-shell-preferred-agent-config '(preselect . cursor)
+        agent-shell-session-strategy 'prompt)
+
+  ;; Typing anywhere in the transcript jumps to the prompt (like chat UIs).
+  ;; Note: n/p/r stay navigation/quote when not at the prompt.
+  (defun shanemcd/agent-shell-self-insert (&optional n)
+    "Insert N characters at the prompt, moving point there if needed."
+    (interactive "p")
+    (unless (shell-maker-point-at-last-prompt-p)
+      (goto-char (point-max)))
+    (self-insert-command (or n 1)))
+  (define-key agent-shell-mode-map [remap self-insert-command]
+              #'shanemcd/agent-shell-self-insert))
+
+(use-package agent-shell-desktop
+  :ensure nil
+  :quelpa (agent-shell-desktop :fetcher github
+                               :repo "timfel/agent-shell-desktop.el")
+  :after agent-shell
+  :demand t
+  :config
+  (agent-shell-desktop-mode 1)
+  (desktop-save-mode 1))
+#+end_src
+
+**** ~ai-code~ (unified AI coding menu)
+
+[[https://github.com/tninja/ai-code-interface.el][ai-code-interface.el]] — transient menu for context-aware coding
+actions. Uses ~agent-shell~ as the backend. Menu is ~C-c a~; start
+Cursor/Claude shells with ~C-c A~ / ~C-c C~.
+
+#+begin_src emacs-lisp
+(use-package ai-code
+  :ensure t
+  :after agent-shell
+  :bind ("C-c a" . ai-code-menu)
+  :config
+  (ai-code-set-backend 'agent-shell)
+  (with-eval-after-load 'magit
+    (ai-code-magit-setup-transients)))
+#+end_src
 *** To be filed or tossed away at some point...
 **** ~browse-at-remote~
 
@@ -738,8 +895,16 @@ I unbind ~flyspell-mode-map~ because I use ~C-.~ for ~embark-act~.
                  "CLOUD_ML_REGION"
                  "ANTHROPIC_VERTEX_PROJECT_ID"
                  "ANTHROPIC_MODEL"
-                 "ANTHROPIC_DEFAULT_HAIKU_MODEL"))
-    (exec-path-from-shell-copy-env var)))
+                 "ANTHROPIC_DEFAULT_HAIKU_MODEL"
+                 "GOOGLE_CLOUD_PROJECT"
+                 "CURSOR_ACP_SESSION_RESUME"))
+    (exec-path-from-shell-copy-env var))
+  ;; agent-shell is loaded earlier; snapshot env now that PATH/Vertex vars exist.
+  (when (fboundp 'agent-shell-make-environment-variables)
+    (setq agent-shell-cursor-environment
+          (agent-shell-make-environment-variables :inherit-env t)
+          agent-shell-anthropic-claude-environment
+          (agent-shell-make-environment-variables :inherit-env t))))
 
 #+END_SRC
 
