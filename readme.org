@@ -544,10 +544,10 @@ Providers:
 Prerequisites on ~PATH~ (via ~exec-path-from-shell~): ~agent~,
 ~claude-agent-acp~ (~npm i -g @agentclientprotocol/claude-agent-acp~).
 
-Sessions persist across Emacs restarts via
-[[https://github.com/timfel/agent-shell-desktop.el][agent-shell-desktop]] +
-~desktop-save-mode~ (saves cwd, agent config, and session id). Enable
-~agent-shell-desktop-mode~ before Desktop restores buffers.
+Past conversations live as Markdown under ~.agent-shell/transcripts/~.
+[[https://github.com/Marx-A00/agent-recall][agent-recall]] indexes them so you can search, browse, and resume — no
+~desktop-save-mode~ / agent-shell-desktop required. Prefer
+~session/load~ so resumed buffers get prior messages back.
 
 #+begin_src emacs-lisp
 ;; Dependencies still from MELPA (not vendored in the local checkout).
@@ -573,7 +573,9 @@ Sessions persist across Emacs restarts via
   ;; Environments are set after exec-path-from-shell (later in this file).
 
   (setq agent-shell-preferred-agent-config '(preselect . cursor)
-        agent-shell-session-strategy 'prompt)
+        agent-shell-session-strategy 'prompt
+        ;; Use session/load (not session/resume) so history is restored.
+        agent-shell-prefer-session-resume nil)
 
   ;; Typing anywhere in the transcript jumps to the prompt (like chat UIs).
   ;; Note: n/p/r stay navigation/quote when not at the prompt.
@@ -586,15 +588,42 @@ Sessions persist across Emacs restarts via
   (define-key agent-shell-mode-map [remap self-insert-command]
               #'shanemcd/agent-shell-self-insert))
 
-(use-package agent-shell-desktop
-  :ensure nil
-  :quelpa (agent-shell-desktop :fetcher github
-                               :repo "timfel/agent-shell-desktop.el")
+;; Search / browse / resume agent-shell transcripts.
+;; https://github.com/Marx-A00/agent-recall
+;; Keys: C-c B browse, C-c R resume, C-c / live search.
+(use-package agent-recall
+  :ensure t
   :after agent-shell
-  :demand t
+  :hook (agent-shell-mode . agent-recall-track-sessions)
+  :bind (("C-c B" . agent-recall-browse)
+         ("C-c R" . agent-recall-resume)
+         ("C-c /" . agent-recall-search-live))
   :config
-  (agent-shell-desktop-mode 1)
-  (desktop-save-mode 1))
+  (setq agent-recall-search-paths '("~/github" "~/projects" "~/.emacs.d")
+        agent-recall-extra-transcript-dirs
+        '((:dir "~/.agent-shell/transcripts/"))
+        agent-recall-search-function 'consult-ripgrep
+        agent-recall-browse-sort 'modified-desc))
+
+;; Persistent project-aware sidebar for agent-shell.
+;; https://github.com/cmacrae/agent-shell-sidebar
+;; Keys: C-c s toggle, C-c f focus (C-c a is already ai-code-menu).
+(use-package agent-shell-sidebar
+  :ensure nil
+  :quelpa (agent-shell-sidebar :fetcher github
+                               :repo "cmacrae/agent-shell-sidebar")
+  :after agent-shell
+  :bind (("C-c s" . agent-shell-sidebar-toggle)
+         ("C-c f" . agent-shell-sidebar-toggle-focus))
+  :custom
+  (agent-shell-sidebar-width "30%")
+  (agent-shell-sidebar-minimum-width 80)
+  (agent-shell-sidebar-maximum-width "50%")
+  (agent-shell-sidebar-position 'right)
+  (agent-shell-sidebar-locked t)
+  :config
+  (setq agent-shell-sidebar-default-config
+        (agent-shell-cursor-make-agent-config)))
 #+end_src
 
 **** ~ai-code~ (unified AI coding menu)
