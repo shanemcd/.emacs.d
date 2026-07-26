@@ -413,7 +413,7 @@ Automatically switch between light and dark themes based on system appearance.
 #+BEGIN_SRC emacs-lisp
 (use-package auto-dark
   :custom
-  (auto-dark-themes '((base16-tomorrow-night) (base16-tomorrow)))
+  (auto-dark-themes '((base16-tomorrow-night) (base16-one-light)))
   :init
   (auto-dark-mode))
 #+END_SRC
@@ -529,7 +529,7 @@ Prerequisites:
                     auto))))
 #+end_src
 
-**** ~agent-shell~ (Cursor + Claude/Vertex via ACP)
+**** ~agent-shell~ (Cursor + Claude/Vertex + Gemini via ACP)
 
 Native Emacs shell for LLM agents over [[https://agentclientprotocol.com][ACP]].
 Loaded from a local checkout for development
@@ -539,10 +539,14 @@ MELPA.
 Providers:
 - *Cursor* — ~agent acp --approve-mcps~ (existing ~agent login~)
 - *Claude* — ~claude-agent-acp~ over Vertex AI (~CLAUDE_CODE_USE_VERTEX~ +
-  ~gcloud~ ADC from ~/.zshrc)
+  ~gcloud~ ADC; project/region from ~/.zshrc via chezmoi)
+- *Gemini* — ~gemini --acp~ over Vertex AI (~GOOGLE_CLOUD_*~ /
+  ~GEMINI_MODEL~ from ~/.zshrc via chezmoi). Antigravity (~agy~) has no
+  ACP yet, so we keep Gemini CLI for agent-shell.
 
 Prerequisites on ~PATH~ (via ~exec-path-from-shell~): ~agent~,
-~claude-agent-acp~ (~npm i -g @agentclientprotocol/claude-agent-acp~).
+~claude-agent-acp~ (~npm i -g @agentclientprotocol/claude-agent-acp~),
+~gemini~ (~npm i -g @google/gemini-cli~).
 
 Past conversations live as Markdown under ~.agent-shell/transcripts/~.
 [[https://github.com/Marx-A00/agent-recall][agent-recall]] indexes them so you can search, browse, and resume — no
@@ -559,7 +563,8 @@ Past conversations live as Markdown under ~.agent-shell/transcripts/~.
   :load-path "/var/home/shanemcd/github/xenodium/agent-shell"
   :demand t
   :bind (("C-c A" . agent-shell-cursor-start-agent)
-         ("C-c C" . agent-shell-anthropic-start-claude-code))
+         ("C-c C" . agent-shell-anthropic-start-claude-code)
+         ("C-c G" . agent-shell-google-start-gemini))
   :config
   ;; Cursor — `agent login` outside Emacs; no ACP authenticate request.
   (setq agent-shell-cursor-authentication
@@ -569,6 +574,11 @@ Past conversations live as Markdown under ~.agent-shell/transcripts/~.
   ;; Claude — Vertex via env from ~/.zshrc (CLAUDE_CODE_USE_VERTEX, etc.).
   (setq agent-shell-anthropic-authentication
         (agent-shell-anthropic-make-authentication :login t))
+
+  ;; Gemini — Vertex via env from ~/.zshrc (chezmoi); model via GEMINI_MODEL.
+  (setq agent-shell-google-authentication
+        (agent-shell-google-make-authentication :vertex-ai t)
+        agent-shell-google-gemini-acp-command '("gemini" "--acp"))
 
   ;; Environments are set after exec-path-from-shell (later in this file).
 
@@ -589,10 +599,12 @@ Past conversations live as Markdown under ~.agent-shell/transcripts/~.
               #'shanemcd/agent-shell-self-insert))
 
 ;; Search / browse / resume agent-shell transcripts.
-;; https://github.com/Marx-A00/agent-recall
+;; Local checkout of https://github.com/shanemcd/agent-recall
+;; (branch fix/session-id-and-resume-loop) until upstream merges.
 ;; Keys: C-c B browse, C-c R resume, C-c / live search.
 (use-package agent-recall
-  :ensure t
+  :ensure nil
+  :load-path "/var/home/shanemcd/github/shanemcd/agent-recall"
   :after agent-shell
   :hook (agent-shell-mode . agent-recall-track-sessions)
   :bind (("C-c B" . agent-recall-browse)
@@ -630,7 +642,7 @@ Past conversations live as Markdown under ~.agent-shell/transcripts/~.
 
 [[https://github.com/tninja/ai-code-interface.el][ai-code-interface.el]] — transient menu for context-aware coding
 actions. Uses ~agent-shell~ as the backend. Menu is ~C-c a~; start
-Cursor/Claude shells with ~C-c A~ / ~C-c C~.
+Cursor/Claude/Gemini shells with ~C-c A~ / ~C-c C~ / ~C-c G~.
 
 #+begin_src emacs-lisp
 (use-package ai-code
@@ -926,6 +938,11 @@ I unbind ~flyspell-mode-map~ because I use ~C-.~ for ~embark-act~.
                  "ANTHROPIC_MODEL"
                  "ANTHROPIC_DEFAULT_HAIKU_MODEL"
                  "GOOGLE_CLOUD_PROJECT"
+                 "GOOGLE_CLOUD_LOCATION"
+                 "GOOGLE_GENAI_USE_VERTEXAI"
+                 "GEMINI_MODEL"
+                 "GEMINI_SANDBOX"
+                 "SANDBOX_FLAGS"
                  "CURSOR_ACP_SESSION_RESUME"))
     (exec-path-from-shell-copy-env var))
   ;; agent-shell is loaded earlier; snapshot env now that PATH/Vertex vars exist.
@@ -933,6 +950,8 @@ I unbind ~flyspell-mode-map~ because I use ~C-.~ for ~embark-act~.
     (setq agent-shell-cursor-environment
           (agent-shell-make-environment-variables :inherit-env t)
           agent-shell-anthropic-claude-environment
+          (agent-shell-make-environment-variables :inherit-env t)
+          agent-shell-google-gemini-environment
           (agent-shell-make-environment-variables :inherit-env t))))
 
 #+END_SRC
