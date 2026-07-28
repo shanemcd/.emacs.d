@@ -37,12 +37,14 @@ ignored:
       "http://melpa.org/packages/"))
 
 (setq package-enable-at-startup nil)
+(package-initialize)
 
 (eval-when-compile
   (require 'use-package))
 
 (setq use-package-always-ensure t)
 
+(setenv "COPYFILE_DISABLE" "1")
 (setq quelpa-update-melpa-p nil)
 (use-package quelpa)
 (use-package quelpa-use-package)
@@ -334,13 +336,13 @@ https://github.com/larstvei/ox-gfm
 #+end_src
 **** ~eat~
 #+begin_src emacs-lisp
-(quelpa '(eat :fetcher git
-              :url "https://codeberg.org/akib/emacs-eat"
-              :files ("*.el" ("term" "term/*.el") "*.texi"
-                      "*.ti" ("terminfo/e" "terminfo/e/*")
-                      ("terminfo/65" "terminfo/65/*")
-                      ("integration" "integration/*")
-                      (:exclude ".dir-locals.el" "*-tests.el"))))
+;; (quelpa '(eat :fetcher git
+;;               :url "https://codeberg.org/akib/emacs-eat"
+;;               :files ("*.el" ("term" "term/*.el") "*.texi"
+;;                       "*.ti" ("terminfo/e" "terminfo/e/*")
+;;                       ("terminfo/65" "terminfo/65/*")
+;;                       ("integration" "integration/*")
+;;                       (:exclude ".dir-locals.el" "*-tests.el"))))
 #+end_src
 *** Interface Customizations
 **** Smooth scrolling
@@ -414,6 +416,7 @@ Automatically switch between light and dark themes based on system appearance.
 (use-package auto-dark
   :custom
   (auto-dark-themes '((base16-tomorrow-night) (base16-one-light)))
+  (setq auto-dark-allow-osascript t)
   :init
   (auto-dark-mode))
 #+END_SRC
@@ -478,23 +481,63 @@ https://www.emacswiki.org/emacs/WindMove
 #+END_SRC
 
 *** LLM
-**** ~ellama~
+**** ~gptel~
 
 #+begin_src emacs-lisp
-(use-package ellama
-  :bind ("C-c e" . ellama-transient-main-menu)
+(use-package gptel
+  :bind ("C-c a" . gptel-send)
   :init
-  (require 'llm-ollama)
-  (setopt ellama-provider
-	  (make-llm-ollama
-       :host "tot"
-       :port 11434
-       :chat-model "granite3.2:8b"
-	   :embedding-model "granite3.2:8b")))
+  (eval-when-compile
+    (require 'gptel nil t)
+    (require 'gptel-anthropic nil t))
+  :config
+  (require 'gptel-anthropic)
+
+  ;; Define a custom Vertex AI backend that doesn't send model in request body
+  (cl-defstruct (gptel-vertex-anthropic (:constructor gptel--make-vertex-anthropic)
+                                        (:copier nil)
+                                        (:include gptel-anthropic)))
+
+  ;; Override request building to exclude :model field
+  (cl-defmethod gptel--request-data ((backend gptel-vertex-anthropic) prompts)
+    (let ((data (cl-call-next-method)))
+      ;; Remove :model from the plist since Vertex has it in the URL
+      (cl-remf data :model)
+      data))
+
+  ;; Map Claude Code model aliases to Vertex AI model names
+  (let* ((model-alias (or (getenv "ANTHROPIC_MODEL") "claude-sonnet-4-5@20250929"))
+         (model-map '(("opusplan" . "claude-sonnet-4-5@20250929")
+                      ("opus" . "claude-opus-4-6@20250514")
+                      ("sonnet" . "claude-sonnet-4-5@20250929")
+                      ("haiku" . "claude-3-5-haiku@20241022")))
+         (model (or (cdr (assoc model-alias model-map)) model-alias))
+         (region (or (getenv "CLOUD_ML_REGION") "us-east5"))
+         (project (getenv "ANTHROPIC_VERTEX_PROJECT_ID")))
+    (setq-default gptel-backend
+                  (gptel--make-vertex-anthropic
+                   :curl-args nil
+                   :name "Claude via Vertex"
+                   :host (format "%s-aiplatform.googleapis.com" region)
+                   :header (lambda (_)
+                             `(("Authorization" . ,(concat "Bearer " (gptel--get-api-key)))))
+                   :key (lambda ()
+                          (with-temp-buffer
+                            (call-process "gcloud" nil t nil "auth" "print-access-token")
+                            (string-trim (buffer-string))))
+                   :models (list (intern model))
+                   :protocol "https"
+                   :endpoint (format "/v1/projects/%s/locations/%s/publishers/anthropic/models/%s:streamRawPredict"
+                                     project region model)
+                   :stream t
+                   :request-params '(:anthropic_version "vertex-2023-10-16")
+                   :url (format "https://%s-aiplatform.googleapis.com/v1/projects/%s/locations/%s/publishers/anthropic/models/%s:streamRawPredict"
+                                region project region model)))
+    (setq-default gptel-model (intern model))))
 #+end_src
 **** ~claude~
 #+begin_src emacs-lisp
-(quelpa '(claudemacs :fetcher github :repo "cpoile/claudemacs"))
+;; (quelpa '(claudemacs :fetcher github :repo "cpoile/claudemacs"))
 #+end_src
 
 **** ~gptel~ (Cursor models via open-cursor proxy)
@@ -560,7 +603,7 @@ Past conversations live as Markdown under ~.agent-shell/transcripts/~.
 
 (use-package agent-shell
   :ensure nil
-  :load-path "/var/home/shanemcd/github/xenodium/agent-shell"
+  :load-path "~/github/xenodium/agent-shell"
   :demand t
   :bind (("C-c A" . agent-shell-cursor-start-agent)
          ("C-c C" . agent-shell-anthropic-start-claude-code)
@@ -604,7 +647,7 @@ Past conversations live as Markdown under ~.agent-shell/transcripts/~.
 ;; Keys: C-c B browse, C-c R resume, C-c / live search.
 (use-package agent-recall
   :ensure nil
-  :load-path "/var/home/shanemcd/github/shanemcd/agent-recall"
+  :load-path "~/github/shanemcd/agent-recall"
   :after agent-shell
   :hook (agent-shell-mode . agent-recall-track-sessions)
   :bind (("C-c B" . agent-recall-browse)
@@ -895,12 +938,10 @@ I unbind ~flyspell-mode-map~ because I use ~C-.~ for ~embark-act~.
 **** ~marp-mode~
 
 #+begin_src emacs-lisp
-;; (use-package marp-mode
-;;   :quelpa (marp-mode :fetcher github :repo "shanemcd/marp-mode")
-;;   :hook (markdown-mode . marp-mode))
-
+;; Use Emacs 30's built-in :vc support instead of quelpa
 (use-package marp-mode
-  :load-path "/var/home/shanemcd/github/shanemcd/marp-mode"
+  :vc (:url "https://github.com/shanemcd/marp-mode"
+       :branch "main")
   :hook (markdown-mode . marp-mode))
 #+end_src
 
@@ -923,28 +964,26 @@ I unbind ~flyspell-mode-map~ because I use ~C-.~ for ~embark-act~.
   :config
   (setq exec-path-from-shell-arguments '("-li"))
   (setenv "SHELL" "/bin/zsh")
-  (exec-path-from-shell-initialize)
-  (dolist (var '("GOPATH"
-                 "PATH"
-                 "LC_ALL"
-                 "LANG"
-                 "LC_TYPE"
-                 "SSH_AGENT_PID"
-                 "SSH_AUTH_SOCK"
-                 "SHELL"
-                 "CLAUDE_CODE_USE_VERTEX"
-                 "CLOUD_ML_REGION"
-                 "ANTHROPIC_VERTEX_PROJECT_ID"
-                 "ANTHROPIC_MODEL"
-                 "ANTHROPIC_DEFAULT_HAIKU_MODEL"
-                 "GOOGLE_CLOUD_PROJECT"
-                 "GOOGLE_CLOUD_LOCATION"
-                 "GOOGLE_GENAI_USE_VERTEXAI"
-                 "GEMINI_MODEL"
-                 "GEMINI_SANDBOX"
-                 "SANDBOX_FLAGS"
-                 "CURSOR_ACP_SESSION_RESUME"))
-    (exec-path-from-shell-copy-env var))
+  (exec-path-from-shell-copy-envs '("GOPATH"
+                                    "PATH"
+                                    "LC_ALL"
+                                    "LANG"
+                                    "LC_TYPE"
+                                    "SSH_AGENT_PID"
+                                    "SSH_AUTH_SOCK"
+                                    "SHELL"
+                                    "CLAUDE_CODE_USE_VERTEX"
+                                    "CLOUD_ML_REGION"
+                                    "ANTHROPIC_VERTEX_PROJECT_ID"
+                                    "ANTHROPIC_MODEL"
+                                    "ANTHROPIC_DEFAULT_HAIKU_MODEL"
+                                    "GOOGLE_CLOUD_PROJECT"
+                                    "GOOGLE_CLOUD_LOCATION"
+                                    "GOOGLE_GENAI_USE_VERTEXAI"
+                                    "GEMINI_MODEL"
+                                    "GEMINI_SANDBOX"
+                                    "SANDBOX_FLAGS"
+                                    "CURSOR_ACP_SESSION_RESUME"))
   ;; agent-shell is loaded earlier; snapshot env now that PATH/Vertex vars exist.
   (when (fboundp 'agent-shell-make-environment-variables)
     (setq agent-shell-cursor-environment

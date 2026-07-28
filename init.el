@@ -10,5 +10,10 @@
 (when (file-exists-p custom-file)
   (load custom-file))
 
-(org-babel-load-file "~/.emacs.d/readme.org")
+(let ((org-file (expand-file-name "readme.org" user-emacs-directory))
+      (el-file (expand-file-name "readme.el" user-emacs-directory)))
+  (if (or (not (file-exists-p el-file))
+          (file-newer-than-file-p org-file el-file))
+      (org-babel-load-file org-file)
+    (load el-file)))
 ;;; init.el ends here
