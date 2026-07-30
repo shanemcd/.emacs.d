@@ -103,7 +103,7 @@ applications.
 By starting the server below listening via TCP, we are able to open reverse
 emacsclient connections back to ourselves using this ZSH function:
 
-#+begin_src sh
+#+begin_src sh :tangle no
 #!/bin/env zsh
 function re {
     # Get the number of arguments
@@ -236,6 +236,13 @@ on save.
 (use-package ob-go)
 #+END_SRC
 
+**** ~rust-mode~
+
+#+BEGIN_SRC emacs-lisp
+(use-package rust-mode
+  :mode "\\.rs\\'")
+#+END_SRC
+
 **** ~dockerfile-mode~
 
 #+BEGIN_SRC emacs-lisp
@@ -335,14 +342,25 @@ https://github.com/larstvei/ox-gfm
 )
 #+end_src
 **** ~eat~
+
+Terminal emulator from NonGNU/MELPA. The package ships Linux-compiled
+terminfo databases; on macOS/BSD those make Backspace insert spaces
+(and other keys misbehave). Recompile once per OS with
+~eat-compile-terminfo~; Linux can keep the prebuilt files.
+
 #+begin_src emacs-lisp
-;; (quelpa '(eat :fetcher git
-;;               :url "https://codeberg.org/akib/emacs-eat"
-;;               :files ("*.el" ("term" "term/*.el") "*.texi"
-;;                       "*.ti" ("terminfo/e" "terminfo/e/*")
-;;                       ("terminfo/65" "terminfo/65/*")
-;;                       ("integration" "integration/*")
-;;                       (:exclude ".dir-locals.el" "*-tests.el"))))
+(use-package eat
+  :commands (eat eat-other-window)
+  :config
+  ;; MELPA terminfo is Linux-built; Darwin/BSD need a local recompile.
+  ;; Stamp is per-system-type so a shared emacs.d across machines is fine.
+  (when (memq system-type '(darwin berkeley-unix))
+    (let ((stamp (expand-file-name
+                  (format ".terminfo-compiled-%s" system-type)
+                  eat-term-terminfo-directory)))
+      (unless (file-exists-p stamp)
+        (eat-compile-terminfo)
+        (with-temp-file stamp (insert "ok\n"))))))
 #+end_src
 *** Interface Customizations
 **** Smooth scrolling
@@ -556,7 +574,7 @@ Prerequisites:
   :commands (gptel gptel-send gptel-menu)
   :bind ("C-c RET" . gptel-send)
   :config
-  (setq gptel-model 'cursor-grok-4.5-high-fast
+  (setq gptel-model 'composer-2.5-fast
         gptel-backend
         (gptel-make-openai "Cursor"
           :host "127.0.0.1:32124"
@@ -564,10 +582,14 @@ Prerequisites:
           :endpoint "/v1/chat/completions"
           :stream t
           :key "unused"
-          :models '(cursor-grok-4.5-high-fast
+          :models '(composer-2.5-fast
+                    composer-2.5
+                    claude-4.6-sonnet-medium
+                    gpt-5.4-medium-fast
+                    gemini-3-flash
+                    cursor-grok-4.5-high-fast
                     cursor-grok-4.5-high
                     cursor-grok-4.5-medium-fast
-                    composer-2.5
                     claude-4.6-opus-high
                     auto))))
 #+end_src
