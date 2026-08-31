@@ -797,6 +797,11 @@ Cursor/Claude/Gemini shells with ~C-c A~ / ~C-c C~ / ~C-c G~.
 (use-package flycheck
   :delight
   :config
+  ;; Silence the once-per-mode "no syntax checker can run here" notice in
+  ;; lisp-interaction-mode buffers. Their only checker (the emacs-lisp byte
+  ;; compiler) is disabled there by Emacs 30+ trusted-content rules
+  ;; (CVE-2024-53920), so Flycheck has nothing to do in those buffers.
+  (setq flycheck-global-modes '(not lisp-interaction-mode))
   (global-flycheck-mode))
 #+END_SRC
 
@@ -1163,8 +1168,8 @@ Trying to piece together a more modern completion system
    consult-theme :preview-key '(:debounce 0.2 any)
    consult-ripgrep consult-git-grep consult-grep
    consult-bookmark consult-recent-file consult-xref
-   consult--source-bookmark consult--source-file-register
-   consult--source-recent-file consult--source-project-recent-file
+   consult-source-bookmark consult-source-file-register
+   consult-source-recent-file consult-source-project-recent-file
    ;; :preview-key "M-."
    :preview-key '(:debounce 0.4 any))
 
