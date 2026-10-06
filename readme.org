@@ -163,12 +163,15 @@ keyword when calling ~use-package~.
 
 **** ~grip-mode~ (GitHub-flavored Markdown preview)
 
-Uses [[https://github.com/chrishrb/go-grip][go-grip]] for local offline GFM preview (no GitHub API rate limits). Toggle
-with ~C-c C-c g~ in Markdown buffers; preview opens in the browser and refreshes
-on save.
+Uses [[https://github.com/chrishrb/go-grip][go-grip]] for offline GFM preview (no GitHub API rate limits), including
+Markdown files opened through TRAMP. Remote files are staged to a local
+temporary file for preview. Toggle with ~C-c C-c g~ in Markdown buffers; preview
+opens in the browser and refreshes as you edit.
 
 #+BEGIN_SRC emacs-lisp
 (use-package grip-mode
+  :vc (:url "https://github.com/shanemcd/grip-mode"
+       :branch "tramp-realtime-refresh")
   :after markdown-mode
   :bind (:map markdown-mode-command-map
          ("g" . grip-mode))
@@ -180,7 +183,7 @@ on save.
     (setenv "PATH" (concat local-bin path-separator (getenv "PATH"))))
   (setopt grip-command 'go-grip
           grip-preview-in-webkit nil
-          grip-real-time-refresh nil))
+          grip-real-time-refresh t))
 #+END_SRC
 
 **** ~show-paren-mode~
@@ -969,6 +972,9 @@ I unbind ~flyspell-mode-map~ because I use ~C-.~ for ~embark-act~.
 (use-package marp-mode
   :vc (:url "https://github.com/shanemcd/marp-mode"
        :branch "main")
+  :custom
+  (marp-engine (expand-file-name
+                "~/.local/lib/node_modules/marp-mermaid-engine/engine.mjs"))
   :hook (markdown-mode . marp-mode))
 #+end_src
 
@@ -1168,8 +1174,6 @@ Trying to piece together a more modern completion system
    consult-theme :preview-key '(:debounce 0.2 any)
    consult-ripgrep consult-git-grep consult-grep
    consult-bookmark consult-recent-file consult-xref
-   consult-source-bookmark consult-source-file-register
-   consult-source-recent-file consult-source-project-recent-file
    ;; :preview-key "M-."
    :preview-key '(:debounce 0.4 any))
 
